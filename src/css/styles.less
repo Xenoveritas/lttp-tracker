@@ -1,0 +1,56 @@
+html {
+  background-color: #414141;
+  color: #CCC;
+  font-family: Verdana, sans-serif;
+  font-size: 10pt;
+}
+
+.items, .dungeons {
+  display: flex;
+  flex-direction: column;
+  .row {
+    display: flex;
+  }
+}
+
+.dungeons .dungeon {
+  margin: 8px;
+  .name {
+    display: none;
+  }
+  // Take it out of normal flow so we can use absolute positioning within the
+  // icon below.
+  position: relative;
+  .prize {
+    position: absolute;
+    right: -8px;
+    bottom: -8px;
+  }
+  .medallion {
+    position: absolute;
+    right: -8px;
+    top: -8px;
+  }
+}
+
+.equipment {
+  display: flex;
+}
+
+.shared-item-slot {
+  // TODO: Figure out a better way to show two items in one slot
+  display: flex;
+}
+
+.maps {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+@import 'map.less';
+@import 'sprites/items.less';
+@import 'sprites/dungeons.less';
+@import 'sprites/prizes.less';
+@import 'sprites/medallions.less';
+@import 'sprites/map.less';
+@import 'rules.less';

@@ -1,0 +1,26 @@
+@import '../mixins/sprites.less';
+@import '../../../generated/sprites.less';
+
+@dungeons: hyrule-castle-escape eastern-palace desert-palace castle-tower heras-tower dark-palace swamp-palace skull-woods thieves-town ice-palace misery-mire turtle-rock ganons-tower;
+
+.dungeons .dungeon {
+  // Have to cheat here: make the srite a "before" pseudo-element so that the
+  // filters don't apply to children.
+  &::before {
+    content: "";
+    display: block;
+    .sprite(@dungeon-missing);
+  }
+  each(@dungeons, {
+    @jsname: replace(@value, '-', '_', 'g');
+    &.dungeon-@{jsname}::before {
+      .sprite-position(@@value);
+    }
+  });
+  &.defeated::before {
+    filter: grayscale(100%);
+    opacity: 0.125;
+  }
+  .sprite-width(@dungeon-missing);
+  .sprite-height(@dungeon-missing);
+}

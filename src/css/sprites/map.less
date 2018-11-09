@@ -1,0 +1,63 @@
+// Mostly this is just for pins.
+
+.pin {
+  // Default pin is map-pin-unavailable
+  .sprite(@map-pin-unavailable);
+  &.visible {
+    .sprite-position(@map-pin-visible);
+  }
+  &.partial {
+    .sprite-position(@map-pin-partial);
+  }
+  &.available {
+    .sprite-position(@map-pin-available);
+  }
+  &.cleared {
+    .sprite-position(@map-pin-cleared);
+  }
+  &.pin-portal, &.pin-superbomb {
+    display: none;
+    &.available {
+      display: block;
+    }
+  }
+  &.pin-portal {
+    .sprite-position(@map-pin-portal);
+  }
+  &.pin-superbomb {
+    .sprite-position(@map-pin-superbomb);
+  }
+  &.dungeon {
+    // FIXME: Not included yet
+    & .items {
+      // For now, just make this be a label-like thing.
+      position: relative;
+      top: -5pt;
+      left: -16px;
+      background-color: #F00;
+      color: #FFF;
+      font-weight: bold;
+      border-radius: 16px;
+      &.items-partial {
+        background-color: #FF0;
+        color: #000;
+      }
+      &.items-all {
+        background-color: #0F0;
+        color: #000;
+      }
+    }
+    // & .boss {
+    //   position: relative;
+    //   top: -16px;
+    //   left: 16px;
+    //   width: 32px;
+    //   height: 32px;
+    //   .sprite-sheet;
+    //   .sprite(11; 7);
+    //   &.boss-defeatable {
+    //     .sprite(12; 7);
+    //   }
+    // }
+  }
+}

@@ -1,0 +1,21 @@
+// Medallion sprites - these reuse item sprites in some cases.
+
+.medallion {
+  .sprite(@medallion);
+  // When not held, gray it out.
+  filter: grayscale(50%);
+  &.held {
+    &.useable {
+      filter: none;
+    }
+  }
+  &.bombos {
+    .sprite-position(@bombos);
+  }
+  &.ether {
+    .sprite-position(@ether);
+  }
+  &.quake {
+    .sprite-position(@quake);
+  }
+}

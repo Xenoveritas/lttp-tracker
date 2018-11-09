@@ -1,0 +1,32 @@
+// Styles for the map display.
+
+@import 'mixins/sprites.less';
+@import '../../generated/sprites.less';
+@import '../../generated/map.less';
+
+@map-sprite-size: @map-pin-unavailable-width;
+
+.map {
+  margin: 4px;
+  .sprite(@light-world);
+  border: solid 1px #000;
+  box-sizing: content-box;
+  // Need to take them out of normal flow for positioning map pins.
+  position: relative;
+  .map-container.dark-world & {
+    .sprite-position(@dark-world);
+  }
+  .pin {
+    // Pins are positioned using percents on the left/top properties.
+    position: absolute;
+    // Position will be set to the center, so use margins to bump the image so
+    // that the given offset will be centered
+    margin: -(@map-sprite-size / 2) 0 0 -(@map-sprite-size / 2);
+    &.dungeon {
+      margin: -16px 0 0 -16px;
+      & .boss {
+        margin: -16px 0 0 0;
+      }
+    }
+  }
+}

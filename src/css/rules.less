@@ -1,0 +1,72 @@
+// Debug styles for displaying rule information.
+
+.rule {
+  font-size: 10pt;
+  .label {
+    cursor: default;
+  }
+  .label, .boolean {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 4px;
+    background-color: #CCC;
+    color: #333;
+  }
+  .label {
+    &.true {
+      background-color: #CFC;
+    }
+    &.false {
+      background-color: #C99;
+    }
+  }
+  .boolean {
+    font-size: 8pt;
+    text-align: center;
+    text-transform: uppercase;
+    &.true {
+      background-color: #0C0;
+      color: #050;
+      &:before {
+        color: #050 !important;
+      }
+    }
+    &.false {
+      background-color: #900;
+      color: #F33;
+    }
+  }
+  .label:before, .boolean:before {
+    content: '\A0';
+    padding-right: 4px;
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+  }
+  .label.true:before, .boolean.true:before {
+    content: '\2705';
+    color: #090;
+  }
+  .label.false:before, .boolean.false:before {
+    content: '\274C';
+    color: #F00;
+  }
+  .all, .any {
+    display: inline-block;
+    border: solid 1px #000;
+    border-radius: 4px;
+    background-color: #CCC;
+    color: #333;
+    padding: 2px;
+    font-size: 8pt;
+    .label {
+      font-size: 10pt;
+    }
+  }
+  .all:before {
+    content: 'ALL: ';
+  }
+  .any:before {
+    content: 'ANY: ';
+  }
+}

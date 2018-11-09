@@ -1,0 +1,45 @@
+// Item icons.
+
+@import '../mixins/sprites.less';
+@import '../../../generated/sprites.less';
+
+@items: bow silver-arrows boomerang magic-boomerang hookshot bombs mushroom magic-powder fire-rod ice-rod bombos ether quake lamp hammer shovel flute net book bottle red-cane blue-cane cape mirror;
+@equipment: sword-1 sword-2 sword-3 sword-4 green-jerkin blue-mail red-mail shield-1 shield-2 shield-3 pegasus-boots power-glove titans-mitt flippers moon-pearl;
+@empty-slots: sword shield glove pegasus-boots moon-pearl;
+
+.generate-item-sprites(@sprites) {
+  each(@sprites, {
+    @jsname: replace(@value, '-', '_', 'g');
+    &.item-@{jsname} {
+      .sprite-position(@@value);
+    }
+  });
+}
+
+.item {
+  // Default item icon to the missing icon
+  .sprite(@missing);
+  margin: 2px;
+
+  // By default, an item is not held.
+  filter: contrast(50%) brightness(50%);
+  opacity: 0.5;
+
+  &.held {
+    // Kill the filter
+    filter: none;
+    opacity: 1;
+  }
+
+  // Basic sprites
+  .generate-item-sprites(@items);
+  .generate-item-sprites(@equipment);
+
+  each(@empty-slots, {
+    @jsname: replace(@value, '-', '_', 'g');
+    &.item-@{jsname}.slot-empty {
+      @sprite: "@{value}-empty";
+      .sprite-position(@@sprite);
+    }
+  });
+}

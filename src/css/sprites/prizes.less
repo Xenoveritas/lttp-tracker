@@ -1,0 +1,19 @@
+@import '../mixins/sprites.less';
+@import '../../../generated/sprites.less';
+
+// Prize sprites
+.prize {
+  .sprite(@unknown);
+  &.pendant {
+    .sprite-position(@pendant);
+  }
+  &.green_pendant {
+    .sprite-position(@green-pendant);
+  }
+  &.crystal {
+    .sprite-position(@crystal)
+  }
+  &.superbomb_crystal {
+    .sprite-position(@superbomb-crystal);
+  }
+}

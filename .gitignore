@@ -1,0 +1,13 @@
+/node_modules
+
+# Ignore WebPack generated files
+/dist
+
+# Ignore intermediate files.
+/generated
+
+# Ignore log files.
+*.log
+
+# Ignore OS generated junk
+Thumbs.db

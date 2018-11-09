@@ -1,0 +1,1170 @@
+# LTTP database. Note that this is "compiled" into a JavaScript file that is
+# loaded.
+
+# The items list is basically a list of names for collectibles. Other data is
+# listed for them, but it's never used. These define the "base states" that
+# rules are based on.
+items:
+  sword_1:
+    name: "Fighter's Sword"
+    slot: "sword"
+    type: "equipment"
+  sword_2:
+    name: "Master Sword"
+    slot: "sword"
+    type: "equipment"
+    upgrades: "sword_1"
+  sword_3:
+    name: "Tempered Sword"
+    slot: "sword"
+    type: "equipment"
+    upgrades: "sword_2"
+  sword_4:
+    name: "Golden Sword"
+    slot: "sword"
+    type: "equipment"
+    upgrades: "sword_3"
+  shield_1:
+    name: "Fighter's Shield"
+    slot: "shield"
+    type: "equipment"
+  shield_2:
+    name: "Red Shield"
+    slot: "shield"
+    type: "equipment"
+    upgrades: "shield_1"
+  shield_3:
+    name: "Mirror Shield"
+    slot: "shield"
+    type: "equipment"
+    upgrades: "shield_2"
+  green_jerkin:
+    name: "Green Jerkin"
+    slot: "armor"
+    type: "equipment"
+    "default": true
+  blue_mail:
+    name: "Blue Mail"
+    slot: "armor"
+    type: "equipment"
+    upgrades: "green_jerkin"
+  red_mail:
+    name: "Red Mail"
+    slot: "armor"
+    type: "equipment"
+    upgrades: "blue_mail"
+  pegasus_boots:
+    name: "Pegasus Shoes"
+    type: "equipment"
+  power_glove:
+    name: "Power Glove"
+    slot: "glove"
+    type: "equipment"
+  titans_mitt:
+    name: "Titan's Mitt"
+    slot: "glove"
+    type: "equipment"
+    upgrades: "power_glove"
+  flippers:
+    name: "Zora's Flippers"
+    type: "equipment"
+  moon_pearl:
+    name: "Moon Pearl"
+    type: "equipment"
+  bow:
+    name: "Bow"
+  # For retro mode:
+  wooden_arrows:
+    name: "Wooden Arrows"
+  silver_arrows:
+    name: "Silver Arrows"
+  boomerang:
+    name: "Boomerang"
+  magic_boomerang:
+    name: "Magical Boomerang"
+    upgrades: "boomerang"
+  hookshot:
+    name: "Hookshot"
+  bombs:
+    name: "Bomb"
+  mushroom:
+    name: "Mushroom"
+  magic_powder:
+    name: "Magic Powder"
+  fire_rod:
+    name: "Fire Rod"
+  ice_rod:
+    name: "Ice Rod"
+  bombos:
+    name: "Bombos Medallion"
+  ether:
+    name: "Ether Medallion"
+  quake:
+    name: "Quake Medallion"
+  lamp:
+    name: "Lantern"
+  hammer:
+    name: "Magic Hammer"
+  shovel:
+    name: "Shovel"
+  flute:
+    name: "Flute"
+    upgrades: "shovel"
+  net:
+    name: "Bug-Catching Net"
+  book:
+    name: "Book of Mudora"
+  bottle:
+    name: "Bottle"
+    stacks: 4
+    # This isn't used but is listed anyway on the off chance it ever gets used:
+    contains: [
+      "Medicine of Life", "Medicine of Magic", "Medicine of Life and Magic",
+      "Fairy", "Bee", "Golden Bee"
+    ]
+  red_cane:
+    name: "Cane of Somaria"
+  blue_cane:
+    name: "Cane of Byrna"
+  cape:
+    name: "Magic Cape"
+  mirror:
+    name: "Magic Mirror"
+  green_pendant:
+    name: "Pendant of Courage"
+    type: "pendant"
+  red_pendant:
+    name: "Pendant of Wisdom"
+    type: "pendant"
+  blue_pendant:
+    name: "Pendant of Power"
+    type: "pendant"
+  crystal_1:
+    name: "Crystal 1"
+    type: "crystal"
+  crystal_2:
+    name: "Crystal 2"
+    type: "crystal"
+  crystal_3:
+    name: "Crystal 3"
+    type: "crystal"
+  crystal_4:
+    name: "Crystal 4"
+    type: "crystal"
+  crystal_5:
+    name: "Crystal 5"
+    type: "crystal"
+    superbomb: true
+  crystal_6:
+    name: "Crystal 6"
+    type: "crystal"
+    superbomb: true
+  crystal_7:
+    name: "Crystal 7"
+    type: "crystal"
+rules:
+  # RULES ######################################################################
+  # These define basic rules.
+  #
+  # Rule definitions are used just about everywhere, so here's the basics:
+  #
+  # * All rules exist in an environment. Each key for each rule and each key for
+  #   each item and location exists in this environment and can be used in a
+  #   rule.
+  # * A rule definition can contain any of the following:
+  #     - A boolean (true, false) that sets the rule to always be that value
+  #     - A string, that evaluates to whatever that string is in the environment
+  #     - An object, that contains the following fields:
+  #         * any: a list of things to logical OR together
+  #         * all: a list of things to logical AND together
+  #       The evaluated value of any and all will be ANDed together to create
+  #       the final evaluated of the rule.
+  #       Each "thing" in that list can either be a string (to look up a
+  #       variable) or itself a rule using the same definition.
+  #     - An array, which is treated as if it were under the "all" key above.
+  #
+  # Each rule has a name and description which, at present, are ignored. In
+  # the future they'll likely be used to generate a "human readable" explanation
+  # of how rules are evaulating, to try and answer "why does this think I
+  # can/can't do thing" questions.
+  light:
+    # Really this is a meta-item. It exists to allow "light source" to be
+    # flagged separately from "fire source" for anyone who wants to attempt
+    # dark room navigation.
+    name: 'Light Source'
+    description: 'A source of light.'
+    requires: 'lamp'
+  sword:
+    name: "Any Sword"
+    requires: any: [ 'sword_1', 'sword_2', 'sword_3', 'sword_4' ]
+  master_sword:
+    name: "Master Sword (or better)"
+    # Also technically full health
+    requires: any: [ 'sword_2', 'sword_3', 'sword_4' ]
+  bow_and_wooden_arrows:
+    name: "Bow & Wooden Arrows"
+    requires: [ 'bow', 'wooden_arrows' ]
+  # This rule isn't really required for anything ever, but ... here it is
+  bow_and_silver_arrows:
+    name: "Bow & Silver Arrows"
+    requires: [ 'bow', 'silver_arrows' ]
+  # For retro mode, here is the new "bow that can be used" rule:
+  bow_and_arrows:
+    name: "Bow & Arrows"
+    requires: 'bow'
+  # Something that can light a torch.
+  light_torch:
+    name: 'Light Torch'
+    description: 'The ability to light a torch.'
+    requires: any: [ 'lamp', 'fire_rod' ]
+  weapon:
+    name: 'Weapon'
+    description: 'Access to a weapon'
+    requires: any: [ 'sword', 'bow_and_arrows', 'bombs', 'fire_rod', 'hammer',
+      'red_cane', 'blue_cane' ]
+  # Something that can melt ice, required for the Ice Palace.
+  melt_ice:
+    name: 'Melt Source'
+    description: 'The ability to melt ice: specifically Freezors and Kholdstare.'
+    requires: any: [ 'fire_rod', 'use_bombos' ]
+  defeat_popo:
+    name: "Defeat Popo"
+    description: "Ability to defeat Popos"
+    requires: any: [ 'weapon', 'hookshot' ]
+  defeat_penguins:
+    name: "Defeat Penguins"
+    description: "Ability to defeat Penguins"
+    # Literally the same as above, but :shrug:
+    requires: any: [ 'weapon', 'hookshot' ]
+  avoid_laser:
+    name: "Avoid Eye Lasers"
+    description: "Please do not look directly at the eye laser."
+    requires: any: [ 'cape', 'blue_cane', 'shield_3' ]
+  # -- Use Medallions --
+  # These rules are to indicate a medallion may be used.
+  use_medallion:
+    name: "Use Medallion"
+    # In Swordless, this becomes just the hammer.
+    requires: any: [ 'sword_1', 'sword_2', 'sword_3', 'sword_4' ]
+  # This rule is effectively for replacing in Swordless.
+  cut_drapes:
+    name: "Cut Drapes"
+    requires: 'sword'
+  use_bombos:
+    name: "Use Bombos Medallion"
+    requires: [ 'use_medallion', 'bombos' ]
+  use_ether:
+    name: "Use Ether Medallion"
+    requires: [ 'use_medallion', 'ether' ]
+  use_quake:
+    name: "Use Quake Medallion"
+    requires: [ 'use_medallion', 'quake' ]
+  mire_medallion:
+    name: "Misery Mire Medallion"
+    # The Misery Mire medallion is randomized. This rule is the "default": if
+    # you have all, you can use it.
+    requires: [ 'bombos', 'ether', 'quake' ]
+  turtle_medallion:
+    name: "Turtle Rock Medallion"
+    # The Turtle Rock medallion is randomized. This rule is the "default": if
+    # you have all, you can use it.
+    requires: [ 'bombos', 'ether', 'quake' ]
+  # NOTE: You do NOT need anything to use the medallions for dungeon unlock
+  # purposes in swordless mode.
+  use_mire_medallion:
+    name: "Use Misery Mire Medallion"
+    requires: [ 'use_medallion', 'mire_medallion' ]
+  use_turtle_medallion:
+    name: "Use Turtle Rock Medallion"
+    requires: [ 'use_medallion', 'turtle_medallion' ]
+  flip_switch_past_barrier:
+    name: 'Flip Crystal Switch Past Barrier'
+    description: 'Something that can flip a crystal switch past a barrier.'
+    requires: any: [ 'boomerang', 'magic_boomerang', 'bombs', 'fire_rod',
+      'ice_rod', 'bow_and_arrows', 'red_cane', 'blue_cane'
+    ]
+  flip_switch:
+    name: 'Flip Crystal Switch'
+    description: 'Something that can flip a crystal switch, assuming nothing is in the way.'
+    requires: any: [ 'flip_switch_past_barrier', 'sword', 'hookshot', 'hammer' ]
+  # Whatever's required to activate a pedestal. This is mainly here so that it
+  # can be replaced with a rule that says "hammer" in swordless runs.
+  pedestal_sword:
+    name: 'Pedestal Sword'
+    requires: any: [ 'sword_2', 'sword_3', 'sword_4' ]
+  glove:
+    name: "Power Glove or Titan's Mitt"
+    requires: any: [ 'power_glove', 'titans_mitt' ]
+  break_weak_wall:
+    name: "Bombs or Pegasus Shoes"
+    requires: any: [ 'bombs', 'pegasus_boots' ]
+  all_crystals:
+    name: "All Crystals"
+    requires: [ 'crystal_1', 'crystal_2', 'crystal_3', 'crystal_4', 'crystal_5',
+      'crystal_6', 'crystal_7' ]
+  # Ganon's Tower rules
+  gt_dms_room:
+    name: "Ganon's Tower - DMs Room"
+    description: "A room in Ganon's Tower"
+    requires: [ 'hammer', 'hookshot' ]
+  gt_randomizer_room:
+    name: "Ganon's Tower - Randomizer Room"
+    description: "A room in Ganon's Tower"
+    requires: [ 'hammer', 'hookshot', 'bombs' ]
+  gt_basement_left:
+    name: "Ganon's Tower - Left Side"
+    description: "Left side of the basement of Ganon's Tower"
+    requires: any: [ 'red_cane', 'bombs' ], all: [ 'hookshot', 'hammer' ]
+  gt_basement_right:
+    name: "Ganon's Tower - Right Side"
+    description: "Right side of the basement of Ganon's Tower"
+    requires: [ 'fire_rod', 'red_cane' ]
+  gt_big_key_room:
+    name: "Ganon's Tower - Big Key Room"
+    description: "The room with the Big Key in Ganon's Tower"
+    requires: [ 'gt_basement_clear', 'bombs' ]
+  gt_basement_clear:
+    name: "Ganon's Tower - Basement"
+    description: "Entering the common area with the Big Chest"
+    requires: any: [ 'gt_basement_left', 'gt_basement_right' ]
+# REGIONS ######################################################################
+#
+# Regions define general areas of the map.
+regions:
+  light_world:
+    name: "Light World"
+    points: "0,0 191,0 191,128 355,128"
+  dm_west:
+    name: "Death Mountain (West)"
+    requires: any: [ [ 'light', 'glove' ], 'flute' ]
+  dm_east:
+    name: "Death Mountain (East)"
+    requires: [ 'dm_west', { any: [ 'hookshot', [ 'hammer', 'mirror' ] ] } ]
+  turtle_rock_top:
+    name: 'Turtle Rock Medallion Platform'
+    # Access to the medallion platform.
+    requires: [ 'dm_east', 'titans_mitt', 'hammer' ]
+  dark_world:
+    name: 'Dark World'
+    # "The area of the Dark World you're supposed to start in" - this does NOT
+    # include the Moon Pearl. This rule gets crazy fast.
+    requires: any: [
+      # Simple enough: Defeat Agahnim, create portal
+      'castle_portal',
+      # Also simple: go through the portal near Flute Spot 5
+      [ 'eastern_portal', 'moon_pearl' ],
+      # Somewhat more complicated: go through Kakariko using the Titan's Mitt
+      # and have the flippers, allowing you to swim there.
+      [ 'moon_pearl', 'titans_mitt', 'flippers' ]
+    ]
+  dw_nw:
+    name: 'Dark World (Northwest)'
+    # Basically "Theives Town and surroundings." Also includes all of Skull
+    # Woods. Note that the Moon Pearl is required to leave the starting area.
+    requires: any: [
+      'kakariko_portal',
+      # Access is also possible with any way to the general Dark World + the
+      # hookshot.
+      [ 'dark_world', 'moon_pearl', 'hookshot' ] ]
+  dw_nw_mirror:
+    name: 'Dark World (Northwest) and Magic Mirror'
+    requires: [ 'dw_nw', 'mirror' ]
+  dw_south:
+    name: 'Dark World (South)'
+    # The portion of the Dark World that's south of Thieve's Town and south
+    # of the Pyramid of Power. Always accessible if you can get to dw_nw
+    # (you can just drop down a ledge), or if you have Dark World access and the
+    # Magic Hammer.
+    requires: any: [ [ 'dark_world', 'hammer' ], 'dw_nw' ]
+  dw_mm:
+    name: 'Misery Mire (exterior)'
+    requires: [ 'titans_mitt', 'flute' ]
+  dw_mm_mirror:
+    name: 'Misery Mire (exterior) with Magic Mirror'
+    requires: [ 'dw_mm', 'mirror' ]
+  dw_dm_west:
+    name: 'Dark World Death Mountain (West)'
+    # The area you can get to as Bunny Link (note: does NOT include Ganon's
+    # Tower)
+    requires: 'dm_west'
+  dw_dm_east:
+    name: 'Dark World Death Mountain (East)'
+    # Basically the rest of Death Mountain from above. Also covers the
+    # Turtle Rock entrance.
+    requires: [ 'dm_east', 'titans_mitt' ]
+locations:
+  # Locations are points on the map. They either indicate places that items can
+  # be retrieved or other points of interest.
+  #
+  # Locations have the following fields:
+  #   name - the human-readable name of the location
+  #   required - a rule defining the requirements for accessing the location,
+  #       defaults to true (always available)
+  #   visible - a rule defining what is required for a location to be "visible"
+  #      which really only means "can see the item there" which defaults to
+  #      false
+  #   location - set of x,y coordinates for a location. Indicates where the
+  #       location is on the 1024x512 map, where x between 0-511 are in the
+  #       Light World and x between 512-1023 are in the Dark World. (Note that
+  #       this makes them effectively tiles.)
+  # LIGHT WORLD LOCATIONS ######################################################
+  ## DARK WORLD TELEPORTS ##
+  # These are not item locations, just areas where you can teleport to the
+  # Dark World from the Light World.
+  kakariko_portal:
+    name: 'Kakariko Village Portal'
+    type: 'portal'
+    # This portal is only useful with the Moon Pearl.
+    requires: any: [ 'titans_mitt', [ 'glove', 'hammer' ] ], all: 'moon_pearl'
+    location: [ 46, 172 ]
+  castle_portal:
+    name: 'Hyrule Castle Gate Portal'
+    # This is pretty much the only portal that doesn't instantly require the
+    # Moon Pearl
+    type: 'portal'
+    requires: 'castle_tower.cleared'
+    location: [ 256, 269 ]
+  eastern_portal:
+    name: 'Eastern Palace Portal (Flute 5)'
+    type: 'portal'
+    requires: [ 'hammer', 'glove', 'moon_pearl' ]
+    location: [ 498, 366 ]
+  swamp_portal:
+    name: 'Swamp Portal'
+    type: 'portal'
+    requires: [ 'hammer', 'glove', 'moon_pearl' ]
+    location: [ 232, 394 ]
+  desert_portal:
+    name: 'Desert Portal'
+    type: 'portal'
+    # Strictly speaking you don't instantly require the Moon Pearl for this one.
+    requires: [ 'flute', 'titans_mitt' ]
+    location: [ 20, 502 ]
+  ice_portal:
+    name: 'Ice Palace Portal'
+    type: 'portal'
+    # Strictly speaking you don't instantly dead-end without the Moon Pearl.
+    # Instead you dead-end after entering the palace and being unable to kill
+    # the Freezor.
+    requires: [ 'flippers', 'titans_mitt', 'moon_pearl' ]
+    location: [ 406, 444 ]
+  # It exists, technically:
+  spectacle_rock_portal:
+    name: "Spectacle Rock Portal"
+    type: 'portal'
+    requires: 'dm_west'
+    location: [ 288, 46 ]
+  dm_east_portal:
+    name: "Death Mountain Eastern Portal"
+    type: 'portal'
+    requires: [ 'dm_east', 'titans_mitt' ]
+    location: [ 394, 116 ]
+  turtle_rock_portal:
+    name: "Turtle Rock Portal"
+    type: 'portal'
+    requires: [ 'dm_east', 'titans_mitt', 'hammer' ]
+    location: [ 480, 28 ]
+  pedestal:
+    name: 'Master Sword Pedestal'
+    requires: [ 'red_pendant', 'blue_pendant', 'green_pendant' ]
+    visible: 'book'
+    location: [ 21, 26 ]
+  forest_mushroom:
+    name: 'Mushroom'
+    location: [ 61, 44 ]
+  thieves_cave:
+    name: "Thieves' Den"
+    location: [ 97, 67 ]
+  lumberjack_cave:
+    name: 'Lumberjack Cave'
+    requires: [ 'castle_tower.cleared', 'pegasus_boots' ]
+    visible: true
+    location: [ 154, 37 ]
+  ether_pedestal:
+    name: 'Ether Pedestal'
+    requires: [ 'dm_west', 'pedestal_sword', 'book' ]
+    visible: [ 'dm_west', 'book' ]
+    location: [ 215, 9 ]
+  old_man:
+    name: 'Lost Old Man'
+    requires: [ 'dm_west', 'light' ]
+    location: [ 229, 119 ]
+  spectacle_rock_cave:
+    name: 'Spectacle Rock Cave'
+    requires: 'dm_west'
+    location: [ 250, 74 ]
+  spectacle_rock:
+    name: 'Spectacle Rock'
+    requires: [ 'dm_west', 'mirror' ]
+    visible: 'dm_west'
+    location: [ 260, 44 ]
+  floating_island:
+    name: 'Floating Island'
+    requires: [ 'dw_dm_east', 'moon_pearl', 'bombs', 'mirror' ]
+    visible: 'dm_east'
+    location: [ 417, 12 ]
+  spiral_cave:
+    name: 'Spiral Cave'
+    requires: 'dm_east'
+    location: [ 408, 46 ]
+  mimic_cave:
+    name: 'Mimic Cave'
+    requires: [ 'moon_pearl', 'mirror', 'use_turtle_medallion', 'dw_dm_east' ]
+    location: [ 431, 47 ]
+  paradox_cave_basic:
+    name: 'Paradox Cave (no bombs)'
+    items: 5
+    requires: 'dm_east'
+  paradox_cave_bombs:
+    name: 'Paradox Cave (behind bombable wall)'
+    items: 2
+    requires: [ 'dm_east', 'bombs' ]
+  paradox_cave:
+    name: 'Paradox Cave'
+    merge: [ 'paradox_cave_basic', 'paradox_cave_bombs' ]
+    location: [ 441, 110 ]
+  zora:
+    name: 'Zora'
+    requires: any: [ 'glove', 'flippers' ]
+    rupees: 500
+  zora_ledge:
+    name: "Zora's Domain Ledge"
+    requires: 'flippers'
+  zoras_domain:
+    name: "Zora's Domain"
+    merge: [ "zora", "zora_ledge" ]
+    #location: [ 490, 64 ] - intentionally lowered as otherwise it looks like
+    # it was on Death Mountain
+    location: [ 490, 72 ]
+  behind_waterfall:
+    name: 'Waterfall Fairy'
+    requires: 'flippers'
+    items: 2
+    location: [ 460, 70 ]
+  well_floor:
+    name: 'Well Floor'
+    items: 4
+  well_cave:
+    name: 'Well Cave'
+    requires: 'bombs'
+  well:
+    name: 'Well'
+    merge: [ 'well_floor', 'well_cave' ]
+    location: [ 11, 217 ]
+  blinds_block_puzzle:
+    name: "Blind's House (block puzzle)"
+    items: 4
+  blinds_secret:
+    name: "Blind's House (bombable wall)"
+    requires: 'bombs'
+  blinds_house:
+    name: "Blind's House"
+    merge: [ 'blinds_block_puzzle', 'blinds_secret' ]
+    location: [ 65, 215 ]
+  bottle_vendor:
+    name: 'Bottle Vendor'
+    rupees: 100
+    location: [ 48, 238 ]
+  chicken_house:
+    name: 'Chicken House'
+    requires: 'bombs'
+    location: [ 50, 277 ]
+  sick_kid:
+    name: 'Sick Kid',
+    requires: 'bottle'
+    location: [ 79, 274 ]
+  tavern:
+    name: 'Tavern'
+    location: [ 81, 290 ]
+  blacksmiths:
+    name: 'Blacksmiths'
+    # Does NOT require the mirror: the guy will follow after save and quit
+    requires: [ 'dw_nw', 'titans_mitt' ]
+    location: [ 154, 273 ]
+  magic_bat:
+    name: 'Magic Bat'
+    requires: any: [ 'hammer', 'dw_nw_mirror' ], all: 'magic_powder'
+    location: [ 165, 287 ]
+  sanctuary_bonk_rocks:
+    name: "Sanctuary Bonk Rocks"
+    requires: 'pegasus_boots'
+    location: [ 199, 149 ]
+  sanctuary:
+    name: 'Sanctuary'
+    location: [ 235, 136 ]
+  castle_graveyard:
+    name: 'Castle Under Graveyard'
+    items: 3
+    requires: 'break_weak_wall'
+    location: [ 265, 149 ]
+  graveyard_cave:
+    name: 'Graveyard Cave'
+    requires: [ 'dw_nw', 'mirror' ]
+    location: [ 291, 140 ]
+  kings_tomb:
+    name: "King's Tomb"
+    requires: [ 'pegasus_boots', { any: [ 'titans_mitt', [ 'dw_nw', 'mirror' ] ] } ]
+    location: [ 307, 151 ]
+  secret_passage:
+    name: "Secret Passage (Uncle)"
+    items: 2
+    location: [ 304, 212 ]
+  witch:
+    name: "Witch's Hut"
+    requires: 'mushroom'
+    location: [ 409, 171 ]
+  sahasrala:
+    name: 'Sahasrala'
+    requires: 'green_pendant'
+    location: [ 414, 236 ]
+  sahasralas_hut:
+    name: "Sahasrala's Hut"
+    requires: 'break_weak_wall'
+    location: [ 414, 220 ]
+  race_game:
+    name: "15 Second Game"
+    requires: 'break_weak_wall'
+    location: [ 49, 368 ]
+  library:
+    name: "Library"
+    requires: 'pegasus_boots'
+    visible: true
+    location: [ 79, 336 ]
+  haunted_grove:
+    name: "Haunted Grove"
+    requires: 'shovel'
+    location: [ 146, 338 ]
+  links_house:
+    name: "Link's House"
+    location: [ 279, 352 ]
+  desert_cliff:
+    name: "Desert Cliff"
+    requires: any: [ 'book', 'dw_mm_mirror' ]
+    location: [ 12, 464 ]
+  checkboard_cave:
+    name: "Checkerboard Cave"
+    requires: [ "dw_mm", "mirror" ]
+    location: [ 90, 397 ]
+  aginahs_cave:
+    name: "Aginah's Cave"
+    requires: 'bombs'
+    location: [ 102, 422 ]
+  south_of_grove_cave:
+    name: 'Cave South of Haunted Grove'
+    requires: [ 'dw_south', 'mirror' ]
+    location: [ 136, 422 ]
+  bombos_pedestal:
+    name: "Bombos Pedestal"
+    requires: [ "book", "dw_south", "mirror", "pedestal_sword" ]
+    visible: [ "book", "dw_south", "mirror" ]
+    location: [ 112, 470 ]
+  dam:
+    name: "Dam"
+    items: 2
+    location: [ 240, 478 ]
+  mini_moldorm_cave:
+    name: "Mini Moldorm Cave"
+    items: 5
+    requires: "bombs"
+    location: [ 334, 480 ]
+  hylia_island:
+    name: "Hylia Island"
+    requires: [ "dw_south", "moon_pearl", "flippers", "mirror" ]
+    location: [ 373, 426 ]
+  ice_rod_cave:
+    name: "Ice Rod Cave"
+    requires: "bombs"
+    location: [ 458, 395 ]
+  hobo:
+    name: 'Hobo Under the Bridge'
+    requires: 'flippers'
+    location: [ 358, 354 ]
+  # DARK WORLD LOCATIONS #######################################################
+  bumper_cave:
+    name: 'Bumper Cave'
+    requires: [ 'dw_nw', 'moon_pearl', 'cape' ]
+    visible: 'dw_nw'
+    location: [ 695, 77 ]
+  spike_cave:
+    name: 'Spike Cave'
+    requires: [ 'moon_pearl', 'hammer', 'dw_dm_west' ]
+    location: [ 805, 73 ]
+  hookshot_cave_full:
+    name: 'Hookshot Cave (three chests)'
+    requires: [ 'moon_pearl', 'dw_dm_east', 'glove', 'hookshot' ]
+    items: 3
+  hookshot_cave_bonk:
+    name: 'Hookshot Cave (bottom chest)'
+    requires: any: [ 'pegasus_boots', 'hookshot' ], all: [ 'moon_pearl', 'dw_dm_east', 'glove' ]
+  hookshot_cave:
+    name: 'Hookshot Cave'
+    merge: [ 'hookshot_cave_full', 'hookshot_cave_bonk' ]
+    location: [ 938, 33 ]
+  death_mountain_cave:
+    name: 'Death Mountain Cave'
+    items: 2
+    requires: [ 'dw_dm_east', 'moon_pearl' ]
+    location: [ 943, 74 ]
+  catfish:
+    name: 'Catfish'
+    requires: [ 'dark_world', 'moon_pearl', 'glove' ]
+    location: [ 969, 88 ]
+  chest_game:
+    name: 'Chest Game'
+    requires: [ 'moon_pearl', 'dw_nw' ]
+    location: [ 537, 239 ]
+  doorless_hut:
+    name: 'Doorless Hut'
+    requires: [ 'moon_pearl', 'dw_nw', 'bombs' ]
+    location: [ 568, 298 ]
+  c_house:
+    name: 'C-Shaped House'
+    requires: [ 'moon_pearl', 'dw_nw' ]
+    location: [ 618, 246 ]
+  peg_cave:
+    name: 'Peg Cave'
+    # Don't bother listing dw_nw as a prereq because the titans_mitt gets you
+    # there anyway
+    requires: [ 'moon_pearl', 'titans_mitt', 'hammer' ]
+    location: [ 674, 309 ]
+  purple_chest:
+    name: 'Locked Chest'
+    # This is the only item that depends on a different location. Weird!
+    requires: [ 'blacksmiths' ]
+    location: [ 666, 272 ]
+  fat_fairy:
+    name: 'Fat Fairy'
+    requires: [ 'moon_pearl', 'superbomb', 'dark_world' ]
+    location: [ 752, 248 ]
+  pyramid_ledge:
+    name: 'Pyramid Ledge'
+    requires: 'dark_world'
+    location: [ 808, 230 ]
+  digging_game:
+    name: 'Digging Game'
+    requires: [ 'dw_south', 'moon_pearl' ]
+    rupees: 80
+    location: [ 540, 354 ]
+  stumpy:
+    name: 'Flute Kid'
+    requires: [ 'dw_south', 'moon_pearl' ]
+    location: [ 669, 350 ]
+  mini_myre_cave:
+    name: 'Mini Myre Cave'
+    requires: 'dw_mm'
+    items: 2
+    location: [ 531, 409 ]
+  hype_cave:
+    name: 'Hype Cave'
+    items: 5
+    requires: [ 'dw_south', 'moon_pearl', 'bombs' ]
+    location: [ 818, 399 ]
+  superbomb:
+    name: 'Superbomb'
+    type: 'superbomb'
+    rupees: 100
+    location: [ 791, 352 ]
+    requires: [ 'dw_south', 'moon_pearl', 'crystal_5', 'crystal_6' ]
+dungeons:
+  # These are almost locations, but with a few extra fields.
+  #
+  # enter - rule for requirements to (meaningfully) enter the dungeon
+  #    (meaningfully in this case basically means "and get past the first
+  #    room" - specific examples are flippers for Swamp Palace and a way to
+  #    defeat the Freezor in the Ice Palace)
+  # boss - information about the boss:
+  #    name - the boss's name
+  #    defeat - requirements for defeating the boss
+  #    access - requirements for even accessing the boss (if any)
+  # items - array describing all items within the dungeon. Names should be
+  #    the names as defined in the spoiler file.
+  # keys - number of keys that are in the random shuffle
+  # notInPool - if given, a list (or single string) of generic dungeon items
+  #    that happen to be missing from the item pool and should not count against
+  #    chests
+  hyrule_castle_escape:
+    name: "Hyrule Castle Escape"
+    # This currently has no location and is therefore not shown on the map.
+    items: [
+      # Listed elsewhere:
+      # "Sanctuary"
+      # { name: "Secret Room - Left", access: 'break_weak_wall' }
+      # { name: "Secret Room - Middle", access: 'break_weak_wall' }
+      # { name: "Secret Room - Right", access: 'break_weak_wall' }
+      { name: "Dark Cross", access: 'light' }
+      { name: "Boomerang Chest", access: 'weapon' }
+      { name: "Map Chest", access: 'weapon' }
+      { name: "Zelda's Cell", access: 'weapon' }
+      # Also listed elsewhere:
+      # { name: "Link's Uncle", type: "uncle" }
+      # "Secret Passage"
+    ]
+    keys: 1
+    # Compass not only isn't in the pool, it doesn't exist.
+    notInPool: [ 'compass', 'bigKey' ]
+  eastern_palace:
+    name: "Eastern Palace"
+    location: [ 490, 198 ]
+    boss:
+      name: "Armos Knights"
+      # Armos don't require the bow. However, there is a Red Eyegore blocking
+      # access to them, and it DOES require the bow.
+      defeat: any: [ 'weapon', 'ice_rod' ]
+      access: [ 'bow_and_arrows', 'light' ]
+    items: [
+      "Compass Chest"
+      { name: "Big Chest", type: "big" }
+      "Cannonball Chest"
+      { name: "Big Key Chest", access: "light" }
+      "Map Chest"
+    ]
+    keys: 0
+  desert_palace:
+    name: "Desert Palace"
+    location: [ 37, 408 ]
+    enter: any: [ 'book', 'dw_mm_mirror' ]
+    boss:
+      name: "Lanmolas"
+      defeat: any: [ 'weapon', 'ice_rod' ]
+      access: [ 'light_torch', 'glove' ]
+    items: [
+      { name: "Big Chest", type: "big" }
+      "Map Chest"
+      { name: "Torch", type: "dash" }
+      { name: "Big Key Chest", access: "defeat_popo" }
+      "Compass Chest"
+    ]
+    keys: 1
+  heras_tower:
+    name: "Hera's Tower"
+    location: [ 287, 16 ]
+    enter: any: [ [ 'hookshot', 'hammer'], 'mirror' ], all: [ 'dm_west', 'flip_switch' ]
+    boss:
+      name: "Moldorm"
+      defeat: any: [ "sword", "hammer" ]
+    items: [
+      { name: "Big Key Chest", access: "light_torch" }
+      { name: "Basement Cage", type: "standing" }
+      "Map Chest"
+      { name: "Compass Chest", afterBigKey: true }
+      { name: "Big Chest", type: "big" }
+    ]
+    keys: 1
+  castle_tower:
+    name: "Castle Tower"
+    location: [ 255, 203 ]
+    enter: any: [ 'master_sword', 'cape' ]
+    boss:
+      name: "Agahnim"
+      prize: false
+      defeat: any: [ 'sword', 'net' ]
+      access: [ 'cut_drapes', 'light' ]
+      afterBigKey: false
+    items: [
+      { name: "Castle Tower - Room 03", access: "weapon" }
+      { name: "Castle Tower - Dark Maze", access: [ "light", "weapon" ] }
+    ]
+    keys: 2
+    notInPool: [ 'map', 'compass', 'bigKey' ]
+  dark_palace:
+    name: "Palace of Darkness"
+    location: [ 1002, 200 ]
+    # Also requires 110 rupees
+    enter: [ 'dark_world', 'moon_pearl' ]
+    boss:
+      name: "Helmasaur King"
+      # I'm a bit unclear on what weapons are useful against him, but the
+      # hammer/bow and arrow requirement for getting there means you can
+      # definitely defeat him.
+      defeat: 'hammer'
+      access: [ 'light', 'hammer', 'bow_and_arrows' ]
+    items: [
+      "Shooter Room"
+      { name: "Big Key Chest", access: "bombs" }
+      { name: "The Arena - Ledge", access: [ "bow_and_arrows", "bombs" ] }
+      "The Arena - Bridge" # Technically behind a key
+      "Stalfos Basement" # Also behind a key
+      "Map Chest"
+      { "Big Chest", type: "big", access: [ "light", "bombs" ] }
+      "Compass Chest" # Not sure how many keys are needed
+      "Harmless Hellway"
+      { name: "Dark Basement - Left", access: "light" }
+      { name: "Dark Basement - Right", access: "light" }
+      { name: "Dark Maze - Top", access: "light" }
+      { name: "Dark Maze - Bottom", access: "light" }
+    ]
+    keys: 6
+  swamp_palace:
+    name: "Swamp Palace"
+    location: [ 752, 478 ]
+    enter: [ 'dw_south', 'mirror', 'flippers' ]
+    boss:
+      name: "Arrghus"
+      defeat: any: [ 'sword', 'hammer' ], all: 'hookshot'
+      access: 'hookshot'
+      afterBigKey: false
+    items: [
+      "Entrance"
+      # All the "hammer" access requirements are because the first flood control
+      # is behind mole-peg-things
+      { name: "Big Chest", type: "big", access: 'hammer' }
+      { name: "Big Key Chest", access: 'hammer' }
+      { name: "Map Chest", access: 'hammer' }
+      { name: "West Chest", access: 'hammer' }
+      { name: "Compass Chest", access: 'hammer' }
+      { name: "Flooded Room - Left", access: 'hammer' }
+      { name: "Flooded Room - Right", access: 'hammer' }
+      { name: "Waterfall Room", access: 'hammer' }
+    ]
+    keys: 1
+  skull_woods:
+    name: "Skull Woods"
+    location: [ 531, 26 ]
+    enter: 'dw_nw'
+    boss:
+      name: "Mothula"
+      defeat: 'fire_rod'
+      access: 'cut_drapes'
+      afterBigKey: false
+    items: [
+      { name: "Big Chest", type: "big", access: 'bombs' }
+      "Big Key Chest"
+      "Compass Chest"
+      "Map Chest"
+      { name: "Bridge Room", access: "fire_rod" }
+      "Pot Prison"
+      "Pinball Room"
+    ]
+    keys: 3
+  thieves_town:
+    name: "Thieves' Town"
+    location: [ 576, 249 ]
+    enter: [ 'dw_nw', 'glove' ]
+    boss:
+      name: "Blind"
+      defeat: any: [ 'sword', 'hammer', 'red_cane', 'blue_cane' ]
+      # This is pointless because there are bomb pots in the room, but whatever:
+      access: 'bombs'
+    items: [
+      { name: "Attic", access: "flip_switch" }
+      "Big Key Chest"
+      "Map Chest"
+      "Compass Chest"
+      "Ambush Chest"
+      { name: "Big Chest", type: "big", access: [ "flip_switch", "hammer" ] }
+      { name: "Blind's Cell", access: "flip_switch" }
+    ]
+    keys: 1
+  ice_palace:
+    name: "Ice Palace"
+    location: [ 920, 442 ]
+    enter: [ 'moon_pearl', 'flippers', 'titans_mitt', 'melt_ice' ]
+    boss:
+      name: "Kholdstare"
+      access: 'hammer'
+      defeat: [ 'melt_ice', 'weapon' ]
+    items: [
+      # Some of these access rules are basically useless since they're met by
+      # being able to access the palace at all. However they're kept on the
+      # off-chance this ever hooks in to the level where it can see magic
+      # levels and inventory capacity to deal with toggling magic items on and
+      # off.
+      { name: "Big Key Chest", access: 'hammer' }
+      { name: "Compass Chest", access: 'defeat_penguins' }
+      { name: "Map Chest", access: 'hammer' }
+      { name: "Spike Room", access: 'defeat_penguins' }
+      { name: "Freezor Chest", access: 'melt_ice' }
+      "Iced T Room"
+      { name: "Big Chest", access: any: [ 'bombs', 'hookshot' ] }
+    ]
+    keys: 2
+  misery_mire:
+    name: "Misery Mire"
+    location: [ 550, 441 ]
+    medallion: 'mire_medallion'
+    enter: [ 'dw_mm', 'use_mire_medallion', { any: [ 'hookshot', 'pegasus_boots' ] } ]
+    boss:
+      name: "Vitreous"
+      access: 'red_cane'
+      defeat: any: [ 'sword', 'bow_and_arrows' ]
+    items: [
+      { name: "Big Chest", type: "big" }
+      "Main Lobby"
+      { name: "Big Key Chest", access: "light_torch" }
+      { name: "Compass Chest", access: "light_torch" }
+      "Bridge Chest"
+      "Map Chest"
+      "Spike Chest"
+    ]
+    keys: 3
+  turtle_rock:
+    name: "Turtle Rock"
+    location: [ 994, 43 ]
+    medallion: 'turtle_medallion'
+    enter: [ 'dw_dm_east', 'titans_mitt', 'hammer', 'use_turtle_medallion', 'red_cane' ]
+    boss:
+      name: 'Trinexx'
+      defeat: [ 'ice_rod', 'fire_rod', 'weapon' ]
+      access: [ 'red_cane', 'light' ]
+    items: [
+      { name: "Chain Chomps", access: 'flip_switch_past_barrier' }
+      "Compass Chest"
+      { name: "Roller Room - Left", access: 'fire_rod' }
+      { name: "Roller Room - Right", access: 'fire_rod' }
+      { name: "Big Chest", type: "big" }
+      "Big Key Chest"
+      { name: "Crystaroller Room", access: 'flip_switch_past_barrier' }
+      { name: "Eye Bridge - Bottom Left", access: 'avoid_laser' }
+      { name: "Eye Bridge - Bottom Right", access: 'avoid_laser' }
+      { name: "Eye Bridge - Top Left", access: 'avoid_laser' }
+      { name: "Eye Bridge - Top Right", access: 'avoid_laser' }
+    ]
+    keys: 4
+  ganons_tower:
+    name: "Ganon's Tower"
+    # Note that this is "east" because "west" doesn't include the tower, despite
+    # the fact it's on the "west" side.
+    enter: [ 'dw_dm_east', 'all_crystals' ]
+    location: [ 800, 0 ]
+    boss:
+      name: "Agahnim 2"
+      prize: false
+    items: [
+      { name: "Bob's Torch", type: "dash" },
+      { name: "DMs Room - Top Left", access: 'gt_dms_room' },
+      { name: "DMs Room - Top Right", access: 'gt_dms_room' },
+      { name: "DMs Room - Bottom Left", access: 'gt_dms_room' },
+      { name: "DMs Room - Bottom Right", access: 'gt_dms_room' },
+      { name: "Randomizer Room - Top Left", access: 'gt_randomizer_room' },
+      { name: "Randomizer Room - Top Right", access: 'gt_randomizer_room' },
+      { name: "Randomizer Room - Bottom Left", access: 'gt_randomizer_room' },
+      { name: "Randomizer Room - Bottom Right", access: 'gt_randomizer_room' },
+      { name: "Firesnake Room", access: 'gt_basement_left' },
+      { name: "Map Chest", access: any: [ 'hookshot', 'pegasus_boots' ], all: 'hammer' },
+      { name: "Big Chest", type: "big", access: 'gt_basement_clear' },
+      "Hope Room - Left"
+      "Hope Room - Right"
+      { name: "Bob's Chest", access: 'gt_basement_clear' },
+      { name: "Tile Room", access: 'red_cane' },
+      { name: "Compass Room - Top Left", access: 'gt_basement_right' },
+      { name: "Compass Room - Top Right", access: 'gt_basement_right' },
+      { name: "Compass Room - Bottom Left", access: 'gt_basement_right' },
+      { name: "Compass Room - Bottom Right", access: 'gt_basement_right' },
+      { name: "Big Key Chest", access: 'gt_big_key_room' },
+      { name: "Big Key Room - Left", access: 'gt_big_key_room' },
+      { name: "Big Key Room - Right", access: 'gt_big_key_room' },
+      { name: "Mini Helmasaur Room - Left", access: 'bow_and_arrows', afterBigKey: true },
+      { name: "Mini Helmasaur Room - Right", access: 'bow_and_arrows', afterBigKey: true },
+      { name: "Pre-Moldorm Chest", access: [ 'bow_and_arrows', 'bombs' ], afterBigKey: true },
+      { name: "Moldorm Chest", access: [ 'bow_and_arrows', 'hookshot', 'sword', 'bombs' ], afterBigKey: true }
+    ]
+    keys: 4
+slots:
+  # Slots just defines names for "default" slots that can then be referred to in
+  # the layout. It's also intended to allow certain modes to override slots
+  # (namely to allow swordless to make the sword blank).
+  #
+  # null indicates an empty space (nothing equipped).
+  #
+  # Note that these are not rules: "sword" is already a rule that means "has any
+  # sword" and "glove" is a rule for "has any glove."
+  sword: [ null, "sword_1", "sword_2", "sword_3", "sword_4" ]
+  armor: [ "green_jerkin", "blue_mail", "red_mail" ]
+  shield: [ null, "shield_1", "shield_2", "shield_3" ]
+  glove: [ null, "power_glove", "titans_mitt" ]
+  bow_and_arrows: [ 'bow', 'silver_arrows' ]
+  # This is used by dungeons to sort through possible entry medallions.
+  medallions: [ 'bombos', 'ether', 'quake' ]
+prizes:
+  # Prizes define what is awarded when a dungeon completes that is NOT the boss
+  # item drop. The order here is the order they're cycled through in the UI.
+  crystal: [ 'crystal_1', 'crystal_2', 'crystal_3', 'crystal_4', 'crystal_7' ]
+  superbomb_crystal: [ 'crystal_5', 'crystal_6' ]
+  green_pendant: [ 'green_pendant' ]
+  pendant: [ 'red_pendant', 'blue_pendant' ]
+layout:
+  # Layout defines the default layout if nothing overrides it.
+  # Items defines the space that items are in. Items below are in "status
+  # screen" order, with items that would share a slot being in arrays.
+  # Note: "bow_and_arrows" is a "special" UI that pulls from "slots" for what it
+  # should contain by default.
+  items: [
+    [ "bow_and_arrows", [ "boomerang", "magic_boomerang" ], "hookshot", "bombs", [ "mushroom", "magic_powder" ] ]
+    [ "fire_rod", "ice_rod", "bombos", "ether", "quake" ]
+    [ "lamp", "hammer", [ "shovel", "flute" ], "net", "book" ]
+    [ "bottle", "red_cane", "blue_cane", "cape", "mirror" ]
+  ]
+  # Equipment is simply a list of either slot IDs (which mask item IDs if they
+  # happen to share them) or item IDs (if an item is present or not).
+  equipment: [
+    "sword", "armor", "shield", "pegasus_boots", "glove", "flippers",
+    "moon_pearl"
+  ]
+  # List of dungeons. Each key is actually treated as a new row, and multiple
+  # keys can be provided.
+  dungeons:
+    light: [
+      "hyrule_castle_escape"
+      "castle_tower"
+      "eastern_palace"
+      "desert_palace"
+      "heras_tower"
+    ]
+    dark: [
+      "dark_palace"
+      "swamp_palace"
+      "skull_woods"
+      "thieves_town"
+      "ice_palace"
+      "misery_mire"
+      "turtle_rock"
+      "ganons_tower"
+    ]
+  maps: [ "light-world", "dark-world" ]
+defaults: [
+  "bombs"
+]
+
+# The various known logics.
+logics:
+  standard:
+    # This is the generic logic. It changes nothing, but needs to exist so that
+    # users can select it.
+    name: "Standard"
+
+  # Changes for Swordless logic
+  swordless:
+    name: "Swordless"
+    rules:
+      use_medallion:
+        # In Swordless, the medallions can always be used within the logic
+        # defined in here (there are special Medallion Tiles)
+        requires: true
+      cut_drapes:
+        # Drapes don't need cutting in swordless.
+        requires: true
+      melt_ice:
+        # Swordless allows the Ice Palace to completed with just Bombos even
+        # without the hammer.
+        requires: any: [ 'fire_rod', 'bombos' ]
+      # Hammer isn't required to open dungeons
+      use_mire_medallion:
+        name: "Use Misery Mire Medallion"
+        requires: 'mire_medallion'
+      use_turtle_medallion:
+        name: "Use Turtle Rock Medallion"
+        requires: 'turtle_medallion'
+    slots:
+      # Override sword to not be selectable
+      sword: [ null ]
+
+  # Changes for retro logic
+  retro:
+    name: "Retro"
+    rules:
+      # Bow also needs arrows to be useful
+      bow_and_arrows:
+        requires: any: [ 'wooden_arrows', 'silver_arrows' ], all: 'bow'
+    slots:
+      # Bow picks up wooden arrows in its slot
+      bow_and_arrows: [ 'bow', 'wooden_arrows', 'silver_arrows' ]
