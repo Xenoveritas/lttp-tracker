@@ -1,9 +1,9 @@
 const path = require('path');
 const webpack = require('webpack');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const SpritesmithPlugin = require('webpack-spritesmith');
-const FilterEngine = require('./lib/filtercanvassmith/engine');
+const FilterEngine = require('./lib/filtersharpsmith/engine');
 
 // The default template spritesmith uses is kind of ... let's go with old.
 function generateLess(data) {
@@ -44,7 +44,7 @@ module.exports = {
     }
   },
   plugins: [
-    new CleanWebpackPlugin(['dist', 'generated']),
+    new CleanWebpackPlugin(),
     new SpritesmithPlugin({
       src: {
           cwd: path.resolve(__dirname, 'src/images/sprites'),
@@ -69,7 +69,7 @@ module.exports = {
             {
               filter: 'resize',
               by: 2,
-              quality: 'nearest'
+              kernel: 'nearest'
             }
           ]
         }
