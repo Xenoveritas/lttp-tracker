@@ -1,6 +1,6 @@
 import makeDB, { LOGICS, TrackerDataBase, LayoutDefinition } from './data.cson';
 
-import Rule from '../lib/rule';
+import Rule from './rule';
 import Item from './item';
 import Region from './region';
 import Location from './location';

@@ -1,6 +1,6 @@
 {
   "name": "lttp-tracker",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Link to the Past Randomizer Tracker",
   "main": "index.js",
   "author": "Xenoveritas <dmpotter44@gmail.com>",
@@ -11,6 +11,7 @@
     "build": "webpack --config webpack.prod.js",
     "dev": "webpack --config webpack.dev.js",
     "builddata": "node lib/lttp-parser.js src/data.cson generated/data.js",
+    "build-tools": "tsc --build tsconfig.tools.json",
     "test": "mocha"
   },
   "devDependencies": {

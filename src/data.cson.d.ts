@@ -1,4 +1,4 @@
-import Rule from '../lib/rule';
+import Rule from './rule';
 import Item from './item';
 import Location from './location';
 import Region from './region';

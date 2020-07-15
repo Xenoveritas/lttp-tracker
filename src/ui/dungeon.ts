@@ -1,6 +1,6 @@
 import { DB } from '../db';
 import Dungeon from '../dungeon';
-import Rule from '../../lib/rule';
+import Rule, { Environment } from '../rule';
 import TrackerUI from '../tracker';
 
 /**
@@ -114,7 +114,7 @@ class MedallionUI {
   private _rules: Rule[];
   // In order to have an "unknown" option, start at -1
   private _medallionIndex = -1;
-  private _env: Rule.Environment;
+  private _env: Environment;
   constructor(db: DB, ruleName: string) {
     this._div = document.createElement('div');
     this._div.className = 'medallion';

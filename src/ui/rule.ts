@@ -1,7 +1,7 @@
 "use strict";
 
 import { DB } from "../db";
-import Rule from "../../lib/rule";
+import Rule from "../rule";
 
 class FieldLabel {
   private _span: HTMLSpanElement;

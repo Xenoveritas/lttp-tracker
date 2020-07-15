@@ -14,9 +14,16 @@ With those two installed, building it should be fairly easy:
 
 ```sh
 yarn install
+yarn build-tools
 yarn build
 ```
 This will generate the production version in `dist/`. The main HTML file is `index.html`.
+
+## Building Tools
+
+At present, the parser for dealing with the logic database is written in TypeScript, but needs to be loaded into WebPack as a plugin. You need to run `yarn build-tools` to build this tool before you can use the WebPack compilers.
+
+This is not optimal and a future version will likely change this, but it's a small price to pay for being able to type check the parser.
 
 ## Generating the debug version
 

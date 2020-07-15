@@ -1,12 +1,12 @@
 import EventEmitter from './eventemitter';
-import Rule from '../lib/rule';
+import { Environment } from './rule';
 
 /**
  * An item.
  */
 export default class Item extends EventEmitter {
   private _held = false;
-  private _env: Rule.Environment = null;
+  private _env: Environment = null;
   /**
    * Creates a new item. These are generally created via the DB and should not
    * need to be created directly.
@@ -28,7 +28,7 @@ export default class Item extends EventEmitter {
     }
   }
 
-  bind(environment: Rule.Environment) {
+  bind(environment: Environment) {
     this._env = environment;
     environment.set(this.id, this._held);
     environment.addListener(this.id, () => {

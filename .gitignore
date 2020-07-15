@@ -3,6 +3,9 @@
 # Ignore WebPack generated files
 /dist
 
+# Ignore compiled tool files
+/dist-tools
+
 # Ignore intermediate files.
 /generated
 

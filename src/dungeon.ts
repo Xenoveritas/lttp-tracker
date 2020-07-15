@@ -1,7 +1,7 @@
 "use strict";
 
 import EventEmitter from './eventemitter';
-import Rule from '../lib/rule';
+import Rule, { Environment, RuleDefinition } from './rule';
 
 /**
  * A Boss within a dungeon. Bosses have a name and a rule for getting to them
@@ -12,9 +12,9 @@ export class Boss {
   private _defeat: Rule;
   private _access: Rule;
   private _hasPrize: boolean;
-  private _env: Rule.Environment;
+  private _env: Environment;
 
-  constructor(name: string, defeat: Rule.RuleDefinition, access: Rule.RuleDefinition, hasPrize = true) {
+  constructor(name: string, defeat: RuleDefinition, access: RuleDefinition, hasPrize = true) {
     this._name = name;
     this._defeat = Rule.parse(defeat);
     if (arguments.length < 3)
@@ -26,19 +26,19 @@ export class Boss {
   get name() { return this._name; }
   get hasPrize() { return this._hasPrize; }
 
-  isAccessible(environment: Rule.Environment): boolean {
+  isAccessible(environment: Environment): boolean {
     if (!environment)
       environment = this._env;
     return this._access.evaluate(environment);
   }
 
-  isDefeatable(environment: Rule.Environment): boolean {
+  isDefeatable(environment: Environment): boolean {
     if (!environment)
       environment = this._env;
     return this._access.evaluate(environment) && this._defeat.evaluate(environment);
   }
 
-  bind(environment: Rule.Environment): void {
+  bind(environment: Environment): void {
     this._env = environment;
     environment.set(this._name + '.access', this._access);
     environment.set(this._name + '.defeat', this._defeat);
@@ -53,21 +53,21 @@ export class Item {
   private _name: string;
   private _access: Rule;
   private _type: string;
-  private _env: Rule.Environment;
+  private _env: Environment;
 
-  constructor(name: string, access = Rule.TRUE, type = 'chest') {
+  constructor(name: string, access = true, type = 'chest') {
     this._name = name;
     this._access = arguments.length > 1 ? Rule.parse(access) : Rule.TRUE;
     this._type = type;
   }
 
-  isAccessible(environment: Rule.Environment): boolean {
+  isAccessible(environment: Environment): boolean {
     if (!environment)
       environment = this._env;
     return this._access.evaluate(environment);
   }
 
-  _bind(parent: string, environment: Rule.Environment): string {
+  _bind(parent: string, environment: Environment): string {
     this._env = environment;
     this._id = parent + '.' + this._name;
     environment.set(this._id, this._access);
@@ -91,7 +91,7 @@ export default class Dungeon extends EventEmitter {
   private _notInPool: string[] | null;
   private _medallion: string | null;
   private _itemCount: number;
-  private _env: Rule.Environment;
+  private _env: Environment;
   public cleared = false;
   /**
    * Creates a new Dungeon. This really isn't intended to be used directly and
@@ -100,7 +100,7 @@ export default class Dungeon extends EventEmitter {
   constructor(
     public readonly id: string,
     public readonly name: string,
-    enter: Rule, boss: Boss, items: Item[], keys: number,
+    enter: RuleDefinition, boss: Boss, items: Item[], keys: number,
     public x: number,
     public y: number, notInPool: string[] | null, medallion: string | null) {
     super();
@@ -153,7 +153,7 @@ export default class Dungeon extends EventEmitter {
   /**
    * Determines if this dungeon can even be entered.
    */
-  isEnterable(environment?: Rule.Environment): boolean {
+  isEnterable(environment?: Environment): boolean {
     if (!environment) {
       environment = this._env;
     }
@@ -163,7 +163,7 @@ export default class Dungeon extends EventEmitter {
   /**
    * Determines if this dungeon can be completed (except for the boss).
    */
-  isCompletable(environment?: Rule.Environment): boolean {
+  isCompletable(environment?: Environment): boolean {
     return this.getAccessibleItemCount(environment) >= this._items.length;
   }
 
@@ -171,7 +171,7 @@ export default class Dungeon extends EventEmitter {
    * Gets the total number of accessible items (that includes all items, even if
    * they turn out to have a key or map or compass).
    */
-  getAccessibleItemCount(environment?: Rule.Environment): number {
+  getAccessibleItemCount(environment?: Environment): number {
     if (!environment) {
       environment = this._env;
     }
@@ -186,7 +186,7 @@ export default class Dungeon extends EventEmitter {
   /**
    * Determines if the boss of the dungeon can be defeated.
    */
-  isBossDefeatable(environment?: Rule.Environment): boolean {
+  isBossDefeatable(environment?: Environment): boolean {
     if (this._boss === null) {
       // If there is no boss, it's always defeatable, I guess.
       return true;
@@ -207,7 +207,7 @@ export default class Dungeon extends EventEmitter {
    * Note that the boss fields do NOT check the enter state and may be flagged
    * even when the boss isn't available.
    */
-  bind(environment: Rule.Environment): void {
+  bind(environment: Environment): void {
     this._env = environment;
     let oldEnter = this._enter.evaluate(environment),
       oldDefeatable = this.isBossDefeatable(environment),

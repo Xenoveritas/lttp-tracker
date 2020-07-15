@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist-tools/",
+    "noImplicitAny": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "es6",
+    "allowJs": true
+  },
+  "files": [
+    "./lib/lttp-config.ts",
+    "./lib/lttp-parser.ts",
+    "./src/rule.ts"
+  ]
+}

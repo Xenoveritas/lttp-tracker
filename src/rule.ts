@@ -1,4 +1,17 @@
-"use strict";
+/**
+ * Event handler for values.
+ */
+export type ValueListener = (name: string, value: boolean, env: Environment) => void;
+/**
+ * A value in a rule.
+ */
+export type RuleValue = Rule | boolean;
+
+export interface RuleObjectDefinition {
+  any?: RuleDefinition[];
+  all?: RuleDefinition[];
+}
+export type RuleDefinition = RuleObjectDefinition | string[] | string | boolean;
 
 /**
  * A value within the environment. This is a local class, it is not exported.
@@ -7,11 +20,12 @@
  * has changed.)
  */
 class Value {
-  constructor(environment, name, value) {
-    this._name = name;
-    this._listeners = null;
-    this._rule = null;
-    this._dependents = null;
+  private listeners: ValueListener[] | null = null;
+  private _value: boolean;
+  _rule: Rule | null = null;
+  private dependents: Value[] | null = null;
+
+  constructor(environment: Environment, private name: string, value: RuleValue) {
     this.setValue(environment, value);
   }
 
@@ -23,7 +37,7 @@ class Value {
    * Change the value. This is a function and not a setter because it also needs
    * to know the environment doing the change.
    */
-  setValue(environment, value) {
+  setValue(environment: Environment, value: RuleValue) {
     if (value instanceof Rule) {
       // This is a special case where the rule is being bound.
       value = this.bindRule(environment, value);
@@ -38,43 +52,43 @@ class Value {
    * Sets the evaluated value - this method sets what gets returned by the
    * value property and deals with firing events, ignoring any rule.
    */
-  _setEvaluatedValue(environment, value) {
+  _setEvaluatedValue(environment: Environment, value: boolean) {
     value = !!value;
     if (this._value !== value) {
       this._value = value;
-      if (this._dependents !== null) {
-        for (let dependent of this._dependents) {
+      if (this.dependents !== null) {
+        for (let dependent of this.dependents) {
           dependent.dependencyChanged(environment);
         }
       }
-      if (this._listeners !== null) {
-        for (let listener of this._listeners) {
-          listener(this._name, this._value, environment);
+      if (this.listeners !== null) {
+        for (let listener of this.listeners) {
+          listener(this.name, this._value, environment);
         }
       }
     }
   }
 
-  bindRule(environment, rule) {
+  bindRule(environment: Environment, rule: Rule): boolean {
     // Raise on circular dependency BEFORE changing any state
-    let deps = rule.uniqueDependencyMap();
-    if (deps.has(this._name)) {
-      throw new Error(`Not making a circular dependency (cannot bind rule referring to "${this._name}" under the name "${this._name}")`);
+    let deps = rule.uniqueDependencySet();
+    if (deps.has(this.name)) {
+      throw new Error(`Not making a circular dependency (cannot bind rule referring to "${this.name}" under the name "${this.name}")`);
     }
     if (this._rule) {
       // If already bound to a rule, unbind it
       this.unbindRule(environment);
     }
     this._rule = rule;
-    for (let name of deps.keys()) {
+    for (let name of deps) {
       environment._get(name).addDependent(this);
     }
     return this._rule.evaluate(environment);
   }
 
-  unbindRule(environment) {
+  unbindRule(environment: Environment) {
     if (this._rule) {
-      for (let name of this._rule.uniqueDependencyMap().keys()) {
+      for (let name of this._rule.uniqueDependencySet()) {
         environment._get(name).removeDependent(this);
       }
     }
@@ -86,23 +100,23 @@ class Value {
    * bound to a value - they act almost exactly like a listener except are
    * easier to remove when a bound rule changes (see unbindRule).
    */
-  addDependent(value) {
-    if (this._dependents === null) {
-      this._dependents = [ value ];
+  addDependent(value: Value) {
+    if (this.dependents === null) {
+      this.dependents = [ value ];
     } else {
-      this._dependents.push(value);
+      this.dependents.push(value);
     }
   }
 
   /**
    * Removes a Value as a dependent of this.
    */
-  removeDependent(value) {
-    if (this._dependents !== null) {
+  removeDependent(value: Value) {
+    if (this.dependents !== null) {
       // Need to know the index
-      for (let i = 0; i < this._dependents.length; i++) {
-        if (this._dependents[i] === value) {
-          this._dependents.splice(i, 1);
+      for (let i = 0; i < this.dependents.length; i++) {
+        if (this.dependents[i] === value) {
+          this.dependents.splice(i, 1);
           break;
         }
       }
@@ -112,26 +126,26 @@ class Value {
   /**
    * Receive notification that a dependency changed.
    */
-  dependencyChanged(environment) {
+  dependencyChanged(environment: Environment) {
     if (this._rule) {
       this._setEvaluatedValue(environment, this._rule.evaluate(environment));
     }
   }
 
-  addListener(listener) {
-    if (this._listeners === null) {
-      this._listeners = [ listener ];
+  addListener(listener: ValueListener) {
+    if (this.listeners === null) {
+      this.listeners = [ listener ];
     } else {
-      this._listeners.push(listener);
+      this.listeners.push(listener);
     }
   }
 
-  removeListener(listener) {
-    if (this._listeners !== null) {
+  removeListener(listener: ValueListener) {
+    if (this.listeners !== null) {
       // Need to know the index
-      for (let i = 0; i < this._listeners.length; i++) {
-        if (this._listeners[i] === listener) {
-          this._listeners.splice(i, 1);
+      for (let i = 0; i < this.listeners.length; i++) {
+        if (this.listeners[i] === listener) {
+          this.listeners.splice(i, 1);
           break;
         }
       }
@@ -144,13 +158,8 @@ class Value {
  * event listeners added to them to receive notification when values change.
  * Rules can be bound to the environment so that they change as well.
  */
-class Environment {
-  /**
-   * Creates a new, empty environment.
-   */
-  constructor() {
-    this.env = new Map();
-  }
+export class Environment {
+  public env = new Map<string, Value>();
 
   /**
    * Removes all mapped values from the environment.
@@ -162,7 +171,7 @@ class Environment {
   /**
    * Evaluate a given name and see if it's true.
    */
-  isTrue(name) {
+  isTrue(name: string): boolean {
     let v = this.env.get(name);
     if (v === undefined) {
       return false;
@@ -175,7 +184,7 @@ class Environment {
    * Gets the value bound to a given name. This returns undefined if the value
    * is not bound, while #isTrue always returns a boolean.
    */
-  get(name) {
+  get(name: string) {
     let v = this.env.get(name);
     if (v === undefined) {
       return undefined;
@@ -187,7 +196,7 @@ class Environment {
   /**
    * Gets a Value at the given name, generating it if necessary.
    */
-  _get(name) {
+  _get(name: string) {
     let v = this.env.get(name);
     if (v === undefined) {
       this.env.set(name, v = new Value(this, name, false));
@@ -198,7 +207,7 @@ class Environment {
   /**
    * Test if a given name is bound to a rule.
    */
-  isBoundToRule(name) {
+  isBoundToRule(name: string) {
     let v = this.env.get(name);
     if (v === undefined) {
       return false;
@@ -211,7 +220,7 @@ class Environment {
    * Sets a name to a value, which should either be a boolean or a Rule. Any
    * other value type will be cooerced to a boolean.
    */
-  set(name, value) {
+  set(name: string, value: RuleValue) {
     let v = this.env.get(name);
     if (v === undefined) {
       this.env.set(name, new Value(this, name, value));
@@ -225,7 +234,7 @@ class Environment {
    * given value changes. If a listener is added multiple times, it will be
    * called multiple times.
    */
-  addListener(name, listener) {
+  addListener(name: string, listener: ValueListener) {
     let v = this.env.get(name);
     if (v === undefined) {
       this.env.set(name, v = new Value(this, name, false));
@@ -238,7 +247,7 @@ class Environment {
    * events. If the listener has been added multiple times, only the first
    * instance will be removed.
    */
-  removeListener(name, listener) {
+  removeListener(name: string, listener: ValueListener) {
     let v = this.env.get(name);
     if (v !== undefined) {
       v.removeListener(listener);
@@ -267,23 +276,32 @@ class Environment {
   }
 }
 
+type RulePart = string | Rule;
+type BasicType = string | boolean;
+
+function isBasicType(o: Rule | string | boolean): o is BasicType {
+  return typeof o === 'string' || typeof o ==='boolean';
+}
+
 /**
  * Implementation of a rule.
  */
-class Rule {
+export default class Rule {
+  /**
+   * If non-null, this value will immediately be returned on evaluate. (If a
+   * string, the rule will be looked up in the environment.)
+   * @private
+   */
+  _fast: BasicType | null = null;
+  _any: RulePart[] | null;
+  _all: RulePart[] | null;
   /**
    * Create a new Rule. It's recommended to use Rule.parse instead of the
    * constructor directly.
    */
-  constructor(definition) {
+  constructor(definition: RuleDefinition) {
     this._any = null;
     this._all = null;
-    /**
-     * If non-null, this value will immediately be returned on evaluate. (If a
-     * string, the rule will be looked up in the environment.)
-     * @private
-     */
-    this._fast = null;
     if (typeof definition === 'string') {
       this._fast = definition;
     } else if (typeof definition === 'object') {
@@ -312,10 +330,10 @@ class Rule {
       }
       // If this is a generic rule (only a string) just dump it into fast and
       // be done.
-      if (this._all && this._any === null && this._all.length === 1) {
+      if (this._all && this._any === null && this._all.length === 1 && isBasicType(this._all[0])) {
         this._fast = this._all[0];
       }
-      if (this._any && this._all === null && this._any.length === 1) {
+      if (this._any && this._all === null && this._any.length === 1 && isBasicType(this._any[0])) {
         this._fast = this._any[0];
       }
     } else if (typeof definition === 'boolean') {
@@ -326,9 +344,9 @@ class Rule {
   }
 
   /**
-   * Evaluate this rule.
+   * Evaluate this rule within an environment.
    */
-  evaluate(env) {
+  evaluate(env: Environment) {
     if (this._fast !== null) {
       if (typeof this._fast === 'string') {
         return env.isTrue(this._fast);
@@ -336,7 +354,7 @@ class Rule {
         return this._fast;
       }
     }
-    let evalFlag = (flag) => {
+    let evalFlag = (flag: string | Rule) => {
       return (typeof flag === 'string') ? env.isTrue(flag) : flag.evaluate(env);
     };
     if (this._any && (!this._any.some(evalFlag))) {
@@ -352,7 +370,7 @@ class Rule {
   /**
    * Determine whether or not this rule depends on a given value.
    */
-  dependsOn(name) {
+  dependsOn(name: string) {
     if (typeof this._fast === 'boolean') {
       return false;
     } else if (typeof this._fast === 'string') {
@@ -361,12 +379,12 @@ class Rule {
     return this._dependsOn(name);
   }
 
-  _dependsOn(name) {
+  private _dependsOn(name: string) {
     if (this._any !== null) {
       if (this._any.some(n => {
-          if (typeof name === 'string') {
+          if (typeof n === 'string') {
             return n === name;
-          } else {
+          } else if (typeof n === 'object') {
             return n._dependsOn(name);
           }
         })) {
@@ -375,9 +393,9 @@ class Rule {
     }
     if (this._all !== null) {
       if (this._all.some(n => {
-          if (typeof name === 'string') {
+          if (typeof n === 'string') {
             return n === name;
-          } else {
+          } else if (typeof n === 'object') {
             return n._dependsOn(name);
           }
         })) {
@@ -388,27 +406,30 @@ class Rule {
   }
 
   /**
-   * Gets a set of unique names within this rule. The Map simply has keys set to
-   * true for each name referenced.
+   * Gets a set of unique names within this rule.
    */
-  uniqueDependencyMap() {
-    let names = new Map();
+  uniqueDependencySet(): Set<string> {
+    let names = new Set<string>();
     if (typeof this._fast === 'boolean') {
       return names;
     } else if (typeof this._fast === 'string') {
-      names.set(this._fast, true);
+      names.add(this._fast);
       return names;
     }
     this._uniqueDependencies(names);
     return names;
   }
 
-  _uniqueDependencies(names) {
+  /**
+   * Internal method to find unique dependencies of this rule.
+   * @param names set being built
+   */
+  private _uniqueDependencies(names: Set<string>) {
     if (this._any !== null) {
       this._any.forEach(name => {
         if (typeof name === 'string') {
-          names.set(name, true);
-        } else {
+          names.add(name);
+        } else if (typeof name === 'object') {
           name._uniqueDependencies(names);
         }
       });
@@ -416,8 +437,8 @@ class Rule {
     if (this._all !== null) {
       this._all.forEach(name => {
         if (typeof name === 'string') {
-          names.set(name, true);
-        } else {
+          names.add(name);
+        } else if (typeof name === 'object') {
           name._uniqueDependencies(names);
         }
       });
@@ -433,7 +454,7 @@ class Rule {
     } else if (typeof this._fast === 'string') {
       return [ this._fast ];
     }
-    return Array.from(this.uniqueDependencyMap().keys());
+    return Array.from(this.uniqueDependencySet());
   }
 
   /**
@@ -453,11 +474,26 @@ class Rule {
       return s + ']'
     }
   }
+
+  static Environment = Environment;
+  static TRUE = new Rule(true);
+  static FALSE = new Rule(false);
+
+  /**
+   * Parse a rule.
+   */
+  static parse(definition: RuleDefinition): Rule {
+    if (definition === true) {
+      return Rule.TRUE;
+    } else if (definition === false || definition === undefined || definition === null) {
+      return Rule.FALSE;
+    } else {
+      return new Rule(definition);
+    }
+  }
 }
 
-Rule.TRUE = new Rule(true);
-Rule.TRUE.evalutate = function() { return true; };
-Rule.FALSE = new Rule(false);
+Rule.TRUE.evaluate = function() { return true; };
 Rule.FALSE.evaluate = function() { return false; };
 
 /**
@@ -465,13 +501,13 @@ Rule.FALSE.evaluate = function() { return false; };
  * "all" rule) or a list within a definition object. In any case it may not be
  * a definition object.
  */
-function parseDefinitonList(list) {
+function parseDefinitonList(list: RuleDefinition[]): RulePart[] {
   if (typeof list === 'string') {
     // This is OK: indicates that the rule is a single string.
     return [ list ];
-  } else if (typeof list === 'object' && Array.isArray(list)) {
+  } else if (Array.isArray(list)) {
     // Basically a list of either other rules or strings
-    let result = [];
+    let result: RulePart[] = [];
     for (let rule of list) {
       if (typeof rule === 'string') {
         // Just add it.
@@ -487,20 +523,3 @@ function parseDefinitonList(list) {
     throw new Error("Invalid value in rule definition: " + list);
   }
 }
-
-/**
- * Parse a rule.
- */
-Rule.parse = function(definition) {
-  if (definition === true) {
-    return Rule.TRUE;
-  } else if (definition === false || definition === undefined || definition === null) {
-    return Rule.FALSE;
-  } else {
-    return new Rule(definition);
-  }
-}
-
-// Set up exports:
-Rule.Environment = Environment;
-module.exports = Rule;
