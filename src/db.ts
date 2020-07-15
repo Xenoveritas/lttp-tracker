@@ -21,7 +21,7 @@ export class DB {
   dungeons: Record<string, Dungeon> = { };
   slots: Record<string, string>;
   prizes: Record<string, string[]>;
-  layout: Record<string, LayoutDefinition>;
+  layout: LayoutDefinition;
   defaults: string[];
   /**
    * Create a new DB. This is not intended to be called directly, instead use
@@ -96,7 +96,7 @@ export class DB {
  * Create a new database using the given logic.
  */
 export default function createDatabase(logic?: string): DB {
-  return new DB(makeDB(logic, Rule, Item, Region, Location, Dungeon));
+  return new DB(makeDB(logic));
 }
 
 createDatabase.LOGICS = LOGICS;

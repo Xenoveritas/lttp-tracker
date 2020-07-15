@@ -60,7 +60,7 @@ class ItemPin extends Pin {
 
 class BasicPin extends Pin {
   className: string;
-  constructor(public location: Location, x, y) {
+  constructor(public location: Location, x: number, y: number) {
     super(x, y);
     this.className = 'pin pin-' + location.type;
     this.pin.setAttribute('title', location.name);

@@ -36,6 +36,10 @@ export class Rule {
   static TRUE: Rule;
   static FALSE: Rule;
 
+  _fast: string | boolean | null;
+  _any: Array<string | Rule>;
+  _all: Array<string | Rule>;
+
   constructor(definition: Rule.RuleDefinition);
 
   evaluate(env: Rule.Environment): boolean;

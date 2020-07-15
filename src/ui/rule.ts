@@ -1,23 +1,24 @@
 "use strict";
 
+import { DB } from "../db";
+import Rule from "../../lib/rule";
+
 class FieldLabel {
   private _span: HTMLSpanElement;
-  private _db;
   private _name: string;
   private _cssClass: string;
-  constructor(db, name: string) {
+  constructor(private db: DB, name: string) {
     this._span = document.createElement('span');
     this._span.append(name);
-    this._db = db;
     this._name = name;
-    this._db.environment.addListener(name, () => { this.update(); });
+    this.db.environment.addListener(name, () => { this.update(); });
     // If this is not bound to anything, make it clickable.
-    if (this._db.environment.isBoundToRule(name)) {
+    if (this.db.environment.isBoundToRule(name)) {
       this._cssClass = 'label bound ';
     } else {
       this._cssClass = 'label ';
       this._span.addEventListener('click', event => {
-        this._db.environment.set(this._name, !this._db.environment.isTrue(this._name));
+        this.db.environment.set(this._name, !this.db.environment.isTrue(this._name));
         event.preventDefault();
       }, false);
     }
@@ -27,11 +28,11 @@ class FieldLabel {
     return this._span;
   }
   update() {
-    this._span.className = this._cssClass + (this._db.environment.isTrue(this._name) ? 'true' : 'false');
+    this._span.className = this._cssClass + (this.db.environment.isTrue(this._name) ? 'true' : 'false');
   }
 }
 
-function createRuleHTML(db, container, rule) {
+function createRuleHTML(db: DB, container: HTMLElement, rule: Rule) {
   if (rule._fast !== null) {
     if (typeof rule._fast === 'boolean') {
       let span = document.createElement('span'), value = rule._fast.toString();
@@ -78,7 +79,7 @@ function createRuleHTML(db, container, rule) {
   }
 }
 
-function createRuleFieldHTML(db, container, item) {
+function createRuleFieldHTML(db: DB, container: HTMLElement, item: string | Rule) {
   if (typeof item === 'string') {
     container.append(new FieldLabel(db, item).element);
   } else {
@@ -93,21 +94,15 @@ function createRuleFieldHTML(db, container, item) {
  * This is a bit of "debug UI" for debugging the internal rule state.
  */
 export default class RuleUI {
-  private _db;
-  private _id;
-  private _rule;
   private _div: HTMLDivElement;
-  constructor(db, id, rule) {
-    this._db = db;
-    this._id = id;
-    this._rule = rule;
+  constructor(private db: DB, private id: string, private rule: Rule) {
     this._div = document.createElement('div');
     this._div.className = 'rule';
     this._div.append(new FieldLabel(db, id).element);
     this._div.append(": ");
     createRuleHTML(db, this._div, rule);
   }
-  get element() {
+  get element(): HTMLElement {
     return this._div;
   }
 }

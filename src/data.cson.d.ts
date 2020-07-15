@@ -4,7 +4,17 @@ import Location from './location';
 import Region from './region';
 import Dungeon from './dungeon';
 
-export type LayoutDefinition = LayoutDefinition[] | string;
+export type ItemLayout = Array<string | string[]>;
+export type EquipmentLayout = string[];
+export type DungeonsLayout = Record<string, string[]>;
+export type MapsLayout = string[];
+
+export interface LayoutDefinition extends Record<string, unknown> {
+  items?: ItemLayout;
+  equipment?: EquipmentLayout;
+  dungeons?: DungeonsLayout;
+  maps?: MapsLayout;
+}
 
 export interface TrackerDataBase {
   rules: Record<string, Rule>;
@@ -14,12 +24,12 @@ export interface TrackerDataBase {
   dungeons: Dungeon[];
   slots: Record<string, string | null>;
   prizes: Record<string, string[]>;
-  layout: Record<string, LayoutDefinition>;
+  layout: LayoutDefinition;
   defaults: string[];
 }
 
-export function createDefaultDatabase(Rule, Item, Region, Location, Dungeon): TrackerDataBase;
+export function createDefaultDatabase(): TrackerDataBase;
 export const LOGICS: Record<string, string>;
 export const DEFAULT_LOGIC: string;
 
-export default function createDatabase(logic: string | null, Rule, Item, Region, Location, Dungeon): TrackerDataBase;
+export default function createDatabase(logic?: string): TrackerDataBase;

@@ -8,6 +8,7 @@ import DungeonUI from './ui/dungeon';
 import MapUI from './ui/map';
 import RuleUI from './ui/rule';
 import LegendUI from './ui/legend';
+import { LayoutDefinition, ItemLayout, EquipmentLayout, DungeonsLayout, MapsLayout } from './data.cson';
 
 type TrackerLayout = Record<string, unknown>;
 
@@ -19,8 +20,8 @@ export default class TrackerUI {
   db: DB;
   private _container: HTMLDivElement;
   private _needsUI = true;
-  private _layout = null;
-  private _dungeonUIs = null;
+  private _layout: LayoutDefinition | null = null;
+  private _dungeonUIs: DungeonUI[] = null;
   private _itemsDiv: HTMLDivElement;
   private _equipmentDiv: HTMLDivElement;
   private _dungeonsDiv: HTMLDivElement;
@@ -52,32 +53,31 @@ export default class TrackerUI {
    * called the first time {@link #element} is retrieved using the default
    * layout if it was never called.
    */
-  createUI(layout?: TrackerLayout) {
+  createUI(layout?: LayoutDefinition | string[]) {
     if (arguments.length === 0) {
       layout = this.db.layout;
     } else if (Array.isArray(layout)) {
       // In this case, each string indicates what to pull in from the default
       // UI.
-      let newLayout = {};
+      let newLayout: LayoutDefinition = {};
       for (let ui of layout) {
         newLayout[ui] = this.db.layout[ui];
       }
       layout = newLayout;
     }
     for (let ui in layout) {
-      let config = layout[ui];
       switch (ui) {
         case 'items':
-          this.createItemUI(config);
+          this.createItemUI(layout.items);
           break;
         case 'equipment':
-          this.createEquipmentUI(config);
+          this.createEquipmentUI(layout.equipment);
           break;
         case 'dungeons':
-          this.createDungeonUI(config);
+          this.createDungeonUI(layout.dungeons);
           break;
         case 'maps':
-          this.createMapsUI(config);
+          this.createMapsUI(layout.maps);
           break;
         default:
           let div = document.createElement('div');
@@ -93,7 +93,7 @@ export default class TrackerUI {
     this._needsUI = false;
     this._layout = layout;
   }
-  createItemUI(items) {
+  createItemUI(items: ItemLayout) {
     this._itemsDiv = document.createElement('div');
     this._itemsDiv.className = 'items';
     this._container.append(this._itemsDiv);
@@ -107,7 +107,7 @@ export default class TrackerUI {
       }
     }
   }
-  createEquipmentUI(equipment) {
+  createEquipmentUI(equipment: EquipmentLayout) {
     this._equipmentDiv = document.createElement('div');
     this._equipmentDiv.className = 'equipment';
     this._container.append(this._equipmentDiv);
@@ -118,7 +118,7 @@ export default class TrackerUI {
       this._equipmentDiv.append(createEquipmentUI(id, items, this.db).element);
     }
   }
-  createDungeonUI(dungeons) {
+  createDungeonUI(dungeons: DungeonsLayout) {
     this._dungeonUIs = [];
     this._dungeonsDiv = document.createElement('div');
     this._dungeonsDiv.className = 'dungeons';
@@ -135,7 +135,7 @@ export default class TrackerUI {
       }
     }
   }
-  createMapsUI(maps) {
+  createMapsUI(maps: MapsLayout) {
     this._mapsDiv = document.createElement('div');
     this._mapsDiv.className = 'maps';
     this._container.append(this._mapsDiv);

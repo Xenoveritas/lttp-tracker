@@ -1,6 +1,7 @@
 import { DB } from '../db';
 import Dungeon from '../dungeon';
 import Rule from '../../lib/rule';
+import TrackerUI from '../tracker';
 
 /**
  * UI for dungeon information.
@@ -11,20 +12,18 @@ import Rule from '../../lib/rule';
  */
 export default class DungeonUI {
   dungeon: Dungeon;
-  tracker;
   private _div: HTMLDivElement;
   private _className: string;
-  private _prizeUI;
-  private _medallionUI;
+  private _prizeUI: PrizeUI;
+  private _medallionUI: MedallionUI;
   private _cleared = false;
-  constructor(tracker, dungeon: string, db: DB) {
+  constructor(public tracker: TrackerUI, dungeon: string, db: DB) {
     if (!(dungeon in db.dungeons)) {
       throw new Error("Unknown dungeon " + dungeon);
     }
     this.dungeon = db.dungeons[dungeon];
     // The tracker is responsible for figuring out the prize state, but needs to
     // be told when to update things.
-    this.tracker = tracker;
     this._div = document.createElement('div');
     this._className = 'dungeon dungeon-' + dungeon;
     this._div.className = this._className;
@@ -74,13 +73,13 @@ export default class DungeonUI {
   }
 }
 
+type Prize = string | null;
+
 class PrizeUI {
-  parent;
   private _div: HTMLDivElement;
-  private _prizes = [ null ];
+  private _prizes: Prize[] = [ null ];
   private _prizeIndex = 0;
-  constructor(parent, prizes) {
-    this.parent = parent;
+  constructor(public parent: DungeonUI, prizes: Record<string, unknown>) {
     this._div = document.createElement('div');
     this._div.className = 'prize';
     // Prizes is an object, not an array, but we want an array of flags.
@@ -111,12 +110,12 @@ class MedallionUI {
   private _div: HTMLDivElement;
   private _ruleName: string;
   private _useRule: string;
-  private _medallions;
+  private _medallions: string;
   private _rules: Rule[];
   // In order to have an "unknown" option, start at -1
   private _medallionIndex = -1;
   private _env: Rule.Environment;
-  constructor(db, ruleName: string) {
+  constructor(db: DB, ruleName: string) {
     this._div = document.createElement('div');
     this._div.className = 'medallion';
     this._ruleName = ruleName;
