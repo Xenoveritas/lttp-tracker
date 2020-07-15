@@ -10,6 +10,7 @@
     "start": "webpack --watch --config webpack.dev.js",
     "build": "webpack --config webpack.prod.js",
     "dev": "webpack --config webpack.dev.js",
+    "builddata": "node lib/lttp-parser.js src/data.cson generated/data.js",
     "test": "mocha"
   },
   "devDependencies": {
@@ -24,6 +25,8 @@
     "mocha": "^5.0.5",
     "sharp": "^0.25.4",
     "style-loader": "^0.23.1",
+    "ts-loader": "^8.0.0",
+    "typescript": "^3.9.6",
     "webpack": "^4.21.0",
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2",

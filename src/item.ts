@@ -1,25 +1,19 @@
-"use strict";
-
-import EventEmitter from './eventemitter.js';
+import EventEmitter from './eventemitter';
+import Rule from '../lib/rule';
 
 /**
  * An item.
  */
 export default class Item extends EventEmitter {
+  private _held = false;
+  private _env: Rule.Environment = null;
   /**
    * Creates a new item. These are generally created via the DB and should not
    * need to be created directly.
    */
-  constructor(id, name) {
+  constructor(readonly id: string, readonly name: string) {
     super();
-    this._id = id;
-    this._name = name;
-    this._held = false;
-    this._env = null;
   }
-
-  get id() { return this._id; }
-  get name() { return this._name; }
 
   get held() { return this._held; }
   set held(value) {
@@ -34,11 +28,11 @@ export default class Item extends EventEmitter {
     }
   }
 
-  bind(environment) {
+  bind(environment: Rule.Environment) {
     this._env = environment;
-    environment.set(this._id, this._held);
-    environment.addListener(this._id, () => {
-      this.held = environment.isTrue(this._id);
+    environment.set(this.id, this._held);
+    environment.addListener(this.id, () => {
+      this.held = environment.isTrue(this.id);
     });
   }
 }

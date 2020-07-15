@@ -11,7 +11,7 @@
  * distinct states as it shows two items: nothing, only bow, only silver arrows,
  * and both.
  */
-export function createItemUI(item, db) {
+export function createItemUI(item, db, couldRecurseInfinitely?: boolean) {
   if (Array.isArray(item)) {
     let uis = [];
     for (let subItem of item) {
@@ -22,7 +22,7 @@ export function createItemUI(item, db) {
     if ('bow_and_arrows' in db.slots && arguments.length < 3) {
       // Extra argument is to prevent infinite recursion if someone asks for
       // bow and arrows in the bow and arrows slot
-      return createItemUI(db.slots['bow_and_arrows'], db, false);
+      return createItemUI(db.slots['bow_and_arrows'], db, true);
     } else {
       // oh well
       return new ItemUI('bow', db);
@@ -53,6 +53,10 @@ export function createEquipmentUI(id, item, db) {
 }
 
 export class ItemUI {
+  item;
+  db;
+  private _div: HTMLDivElement;
+  private _cssClass: string;
   constructor(item, db) {
     // Item is currently a string ID, so get the actual item.
     this.item = db.items[item];
@@ -93,10 +97,12 @@ export class ItemUI {
  * going away because it's annoying.
  */
 export class BowUI {
+  private _db;
+  private _div: HTMLDivElement;
+  private _state = 0;
   constructor(db) {
     this._db = db;
     this._div = document.createElement('div');
-    this._state = 0;
     //this._div.append(this.item.name);
     this._div.addEventListener('click', event => {
       if (event.shiftKey) {
@@ -161,6 +167,8 @@ export class BowUI {
  * multiple ItemUIs into a single <div>.
  */
 export class MultiItemUI {
+  subUIs;
+  private _div: HTMLDivElement;
   constructor(subUIs) {
     this.subUIs = subUIs;
     this._div = document.createElement('div');
@@ -176,13 +184,15 @@ export class MultiItemUI {
 }
 
 export class EquipmentUI {
+  private _id;
+  private _items = [];
+  /**
+   * Active item index.
+   */
+  private _index = 0;
+  private _div: HTMLDivElement;
   constructor(id, items, db) {
     this._id = id;
-    this._items = [];
-    /**
-     * Active item index.
-     */
-    this._index = 0;
     for (let i = 0; i < items.length; i++) {
       if (items[i] === null) {
         // This is allowed! Null means "blank."

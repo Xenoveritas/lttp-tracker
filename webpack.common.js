@@ -21,23 +21,33 @@ function generateLess(data) {
 }
 
 module.exports = {
-  entry: './src/js/index.js',
+  entry: './src/index.ts',
   output: {
     filename: '[name].[chunkhash].js',
     path: path.resolve(__dirname, 'dist')
   },
   module: {
-    rules: [{
-      test: /\.(png|jpg|gif)$/,
-      use: [ {
-        loader: 'file-loader'
-      } ]
-    }, {
-      test: /data.cson$/,
-      use: [ 'lttp-loader' ]
-    }]
+    rules: [
+      {
+        test: /\.(png|jpg|gif)$/,
+        use: [ {
+          loader: 'file-loader'
+        } ]
+      },
+      {
+        test: /data.cson$/,
+        use: [ 'lttp-loader' ]
+      },
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader'
+      }
+    ]
   },
   devtool: "source-map",
+  resolve: {
+    extensions: [ '.tsx', '.ts', '.js' ],
+  },
   resolveLoader: {
     alias: {
       'lttp-loader': './lib/lttp-loader.js'

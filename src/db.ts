@@ -1,12 +1,10 @@
-"use strict";
+import makeDB, { LOGICS } from './data.cson';
 
-import makeDB, { LOGICS } from '../data.cson';
-
-const Rule = require('../../lib/rule');
-import Item from './item.js';
-import Region from './region.js';
-import Location from './location.js';
-import Dungeon from './dungeon.js';
+import Rule from '../lib/rule';
+import Item from './item';
+import Region from './region';
+import Location from './location';
+import Dungeon from './dungeon';
 
 /**
  * The DB contains information about the various items, dungeons, locations,
@@ -15,23 +13,29 @@ import Dungeon from './dungeon.js';
  * things are available.
  */
 class DB {
+  environment = new Rule.Environment();
+  rules: Rule[];
+  items = { };
+  regions = { };
+  locations;
+  dungeons = { };
+  slots;
+  prizes;
+  layout;
+  defaults;
   /**
    * Create a new DB. This is not intended to be called directly, instead use
    * createDatabase to create a new DB.
    */
   constructor(db) {
-    this.environment = new Rule.Environment();
     this.rules = db.rules;
-    this.items = { };
     for (let item of db.items) {
       this.items[item.id] = item;
     }
-    this.regions = { };
     for (let region of db.regions) {
       this.regions[region.id] = region;
     }
     this.locations = db.locations;
-    this.dungeons = { };
     for (let dungeon of db.dungeons) {
       this.dungeons[dungeon.id] = dungeon;
     }
@@ -91,7 +95,7 @@ class DB {
 /**
  * Create a new database using the given logic.
  */
-export default function createDatabase(logic) {
+export default function createDatabase(logic?) {
   return new DB(makeDB(logic, Rule, Item, Region, Location, Dungeon));
 }
 

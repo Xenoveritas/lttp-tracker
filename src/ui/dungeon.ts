@@ -1,6 +1,6 @@
 "use strict";
 
-const Rule = require('../../../lib/rule');
+import Rule from '../../lib/rule';
 
 /**
  * UI for dungeon information.
@@ -10,6 +10,13 @@ const Rule = require('../../../lib/rule');
  * Class for the dungeon UI.
  */
 export default class DungeonUI {
+  dungeon;
+  tracker;
+  private _div: HTMLDivElement;
+  private _className: string;
+  private _prizeUI;
+  private _medallionUI;
+  private _cleared = false;
   constructor(tracker, dungeon, db) {
     if (!(dungeon in db.dungeons)) {
       throw new Error("Unknown dungeon " + dungeon);
@@ -36,8 +43,7 @@ export default class DungeonUI {
     if (this.dungeon.medallion) {
       this._div.append((this._medallionUI = new MedallionUI(db, this.dungeon.medallion)).element);
     }
-    this._cleared = false;
-    this._div.addEventListener('click', event => {
+    this._div.addEventListener('click', () => {
       this.bossDefeated = !this.bossDefeated;
     });
   }
@@ -69,16 +75,18 @@ export default class DungeonUI {
 }
 
 class PrizeUI {
+  parent;
+  private _div: HTMLDivElement;
+  private _prizes = [ null ];
+  private _prizeIndex = 0;
   constructor(parent, prizes) {
     this.parent = parent;
     this._div = document.createElement('div');
     this._div.className = 'prize';
     // Prizes is an object, not an array, but we want an array of flags.
-    this._prizes = [ null ];
     for (let prize in prizes) {
       this._prizes.push(prize);
     }
-    this._prizeIndex = 0;
     this._div.addEventListener('click', event => {
       this._prizeIndex++;
       if (this._prizeIndex >= this._prizes.length)
@@ -100,7 +108,15 @@ class PrizeUI {
  * UI for displaying the medallion used to open a dungeon.
  */
 class MedallionUI {
-  constructor(db, ruleName) {
+  private _div: HTMLDivElement;
+  private _ruleName: string;
+  private _useRule: string;
+  private _medallions;
+  private _rules: Rule[];
+  // In order to have an "unknown" option, start at -1
+  private _medallionIndex = -1;
+  private _env: Rule.Environment;
+  constructor(db, ruleName: string) {
     this._div = document.createElement('div');
     this._div.className = 'medallion';
     this._ruleName = ruleName;
@@ -110,8 +126,6 @@ class MedallionUI {
     for (let medallion of this._medallions) {
       this._rules.push(Rule.parse(medallion));
     }
-    // In order to have an "unknown" option, start at -1
-    this._medallionIndex = -1;
     this._div.addEventListener('click', event => {
       this._medallionIndex++;
       if (this._medallionIndex >= this._medallions.length) {

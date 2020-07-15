@@ -8,14 +8,14 @@ function capitalize(str) {
   return str.substring(0,1).toUpperCase() + str.substring(1);
 }
 
-function makeIcon(cssClass) {
+function makeIcon(cssClass: string): HTMLDivElement {
   let icon = document.createElement('div');
   icon.className = cssClass;
   icon.style.display = 'inline-block';
   return icon;
 }
 
-function makeItemIcon(id, held) {
+function makeItemIcon(id: string, held = false): HTMLDivElement {
   let icon = makeIcon('item item-' + id);
   if (held) {
     icon.className += ' held';
@@ -23,7 +23,7 @@ function makeItemIcon(id, held) {
   return icon;
 }
 
-function makePinEntry(id, name) {
+function makePinEntry(id: string, name?: string): HTMLLIElement {
   if (!name) {
     name = capitalize(id);
   }
@@ -33,7 +33,7 @@ function makePinEntry(id, name) {
   return li;
 }
 
-function makeDungeonPinEntry(items, bossDefeatable) {
+function makeDungeonPinEntry(items?: string, bossDefeatable?: boolean) {
   let state = 'open';
   if (arguments.length == 0) {
     state = 'closed';
@@ -75,7 +75,7 @@ function makePrizeEntry(prize) {
   return li;
 }
 
-function makeMedallionEntry(medallion, available, useable) {
+function makeMedallionEntry(medallion: string, available = false, useable = false): HTMLLIElement {
   let css = 'medallion';
   if (medallion) {
     css += ' ' + medallion;
@@ -105,6 +105,7 @@ function makeBossEntry(boss) {
 }
 
 export default class LegendUI {
+  private _div: HTMLDivElement;
   constructor(db) {
     this._div = document.createElement('div');
     let list = document.createElement('ul');

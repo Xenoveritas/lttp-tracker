@@ -1,15 +1,20 @@
 "use strict";
 
-import EventEmitter from './eventemitter.js';
-
-const Rule = require('../../lib/rule');
+import EventEmitter from './eventemitter';
+import Rule from '../lib/rule';
 
 /**
  * A Boss within a dungeon. Bosses have a name and a rule for getting to them
  * and a separate rule for being able to defeat them..
  */
 export class Boss {
-  constructor(name, defeat, access, hasPrize) {
+  private _name: string;
+  private _defeat: Rule;
+  private _access: Rule;
+  private _hasPrize: boolean;
+  private _env: Rule.Environment;
+
+  constructor(name: string, defeat: Rule.RuleDefinition, access: Rule.RuleDefinition, hasPrize = true) {
     this._name = name;
     this._defeat = Rule.parse(defeat);
     if (arguments.length < 3)
@@ -44,10 +49,16 @@ export class Boss {
  * An item location within a dungeon.
  */
 export class Item {
-  constructor(name, access, type) {
+  private _id: string;
+  private _name: string;
+  private _access: Rule;
+  private _type: string;
+  private _env: Rule.Environment;
+
+  constructor(name: string, access = Rule.TRUE, type = 'chest') {
     this._name = name;
     this._access = arguments.length > 1 ? Rule.parse(access) : Rule.TRUE;
-    this._type = arguments.length > 2 ? type : 'chest';
+    this._type = type;
   }
 
   isAccessible(environment) {
@@ -68,14 +79,27 @@ export class Item {
  * Describes a dungeon.
  */
 export default class Dungeon extends EventEmitter {
+  private _id: string;
+  private _enter: Rule;
+  private _boss;
+  private _items;
+  private _keys;
+  private _notInPool;
+  private _medallion;
+  private _itemCount: number;
+  private _env: Rule.Environment;
+  public cleared = false;
   /**
    * Creates a new Dungeon. This really isn't intended to be used directly and
    * should instead instances should be retrieved from the Dungeon DB.
    */
-  constructor(id, name, enter, boss, items, keys, x, y, notInPool, medallion) {
+  constructor(
+    public readonly id: string,
+    public readonly name: string,
+    enter, boss, items, keys,
+    public x: number,
+    public y: number, notInPool, medallion) {
     super();
-    this._id = id;
-    this._name = name;
     this._enter = Rule.parse(enter);
     this._boss = boss;
     this._items = items;
@@ -90,23 +114,12 @@ export default class Dungeon extends EventEmitter {
     if (this._notInPool) {
       this._itemCount += this._notInPool.length;
     }
-    this.x = x;
-    this.y = y;
-    this.cleared = false;
-  }
-
-  get id() {
-    return this._id;
-  }
-
-  get name() {
-    return this._name;
   }
 
   /**
    * Whether or not defeating the boss awards a prize.
    */
-  get hasPrize() {
+  get hasPrize(): boolean {
     return this._boss === null ? false : this._boss.hasPrize;
   }
 
@@ -195,7 +208,7 @@ export default class Dungeon extends EventEmitter {
     let oldEnter = this._enter.evaluate(environment),
       oldDefeatable = this.isBossDefeatable(environment),
       oldItemCount = this.getAccessibleItemCount(environment),
-      nextEvent = false;
+      nextEvent: NodeJS.Timeout | boolean = false;
     let processEvent = () => {
       // Blank out the next event.
       nextEvent = false;
@@ -229,7 +242,7 @@ export default class Dungeon extends EventEmitter {
     });
     environment.addListener(this._id + ".enter", listener);
   }
-}
 
-Dungeon.Boss = Boss;
-Dungeon.Item = Item;
+  static Boss = Boss;
+  static Item = Item;
+}

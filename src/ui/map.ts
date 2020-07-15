@@ -5,6 +5,7 @@
  * and generates a <div> that can be placed there. And that's it.
  */
 class Pin {
+  pin: HTMLDivElement;
   constructor(x, y) {
     // Position the pin using CSS percents to allow the map to be resized.
     x = (x / 512) * 100;
@@ -26,6 +27,8 @@ class Pin {
 }
 
 class ItemPin extends Pin {
+  location;
+  className: string;
   constructor(location, x, y) {
     super(x, y);
     this.location = location;
@@ -56,6 +59,8 @@ class ItemPin extends Pin {
 }
 
 class BasicPin extends Pin {
+  location;
+  className: string;
   constructor(location, x, y) {
     super(x, y);
     this.location = location;
@@ -83,6 +88,10 @@ class BasicPin extends Pin {
  * A pin that represents a dungeon. Dungeons are a bit more complex.
  */
 class DungeonPin extends Pin {
+  dungeon;
+  className: string;
+  itemPinDiv: HTMLDivElement;
+  bossPinDiv: HTMLDivElement;
   constructor(dungeon, x, y) {
     super(x, y);
     this.dungeon = dungeon;
@@ -120,6 +129,8 @@ class DungeonPin extends Pin {
  * coordinates are shown.
  */
 export default class MapUI {
+  private _container: HTMLDivElement;
+  private _div: HTMLDivElement;
   constructor(world, db) {
     this._container = document.createElement('div');
     this._container.className = 'map-container ' + world;

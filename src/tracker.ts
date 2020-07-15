@@ -1,33 +1,39 @@
-"use strict";
-
 /**
  * Main module for the tracker UI.
  */
 
-import createDatabase from './db.js';
-import { createItemUI, createEquipmentUI } from './ui/item.js';
-import DungeonUI from './ui/dungeon.js';
-import MapUI from './ui/map.js';
-import RuleUI from './ui/rule.js';
-import LegendUI from './ui/legend.js';
+import createDatabase from './db';
+import { createItemUI, createEquipmentUI } from './ui/item';
+import DungeonUI from './ui/dungeon';
+import MapUI from './ui/map';
+import RuleUI from './ui/rule';
+import LegendUI from './ui/legend';
+
+type TrackerLayout = Record<string, unknown>;
 
 /**
  * The TrackerUI. This manages maintaining state in the web application and also
  * coordinating state between various UI elements.
  */
 export default class TrackerUI {
+  db;
+  private _container: HTMLDivElement;
+  private _needsUI = true;
+  private _layout = null;
+  private _dungeonUIs = null;
+  private _itemsDiv: HTMLDivElement;
+  private _equipmentDiv: HTMLDivElement;
+  private _dungeonsDiv: HTMLDivElement;
+  private _mapsDiv: HTMLDivElement;
   /**
    * Create a new TrackerUI.
    */
-  constructor(logic) {
+  constructor(logic?) {
     this.db = createDatabase(logic);
     // TODO: Load defaults from local storage or something.
     // Always generate our container.
     this._container = document.createElement('div');
     this._container.className = 'alttp-tracker';
-    this._needsUI = true;
-    this._layout = null;
-    this._dungeonUIs = null;
   }
 
   /**
@@ -46,7 +52,7 @@ export default class TrackerUI {
    * called the first time {@link #element} is retrieved using the default
    * layout if it was never called.
    */
-  createUI(layout) {
+  createUI(layout?: TrackerLayout) {
     if (arguments.length === 0) {
       layout = this.db.layout;
     } else if (Array.isArray(layout)) {
@@ -145,7 +151,7 @@ export default class TrackerUI {
   createDebugUI() {
     // Get the rules
     let rules = this.db.environment._getBoundRules();
-    let names = Array.from(rules.keys());
+    let names: string[] = Array.from(rules.keys());
     names.sort((a, b) => { return a.localeCompare(b, "en"); });
     let debug = document.createElement('div');
     this._container.append(debug);

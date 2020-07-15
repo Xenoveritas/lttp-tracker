@@ -1,30 +1,23 @@
 "use strict";
-import EventEmitter from './eventemitter.js';
-
-const Rule = require('../../lib/rule');
+import EventEmitter from './eventemitter';
+import Rule from '../lib/rule';
 
 /**
  * Describes a region of the map.
  */
 export default class Region extends EventEmitter {
+  private _requires: Rule;
+  private _points;
+  private _env: Rule.Environment;
+
   /**
    * Creates a new region. This really isn't intended to be used directly and
    * should instead instances should be retrieved from the region DB.
    */
-  constructor(id, name, requires, points) {
+  constructor(public readonly id: string, public readonly name: string, requires: Rule.RuleDefinition, points) {
     super();
-    this._id = id;
-    this._name = name;
     this._requires = Rule.parse(requires);
     this._points = points;
-  }
-
-  get id() {
-    return this._id;
-  }
-
-  get name() {
-    return this._name;
   }
 
   /**
@@ -44,7 +37,7 @@ export default class Region extends EventEmitter {
    */
   bind(environment) {
     this._env = environment;
-    environment.set(this._id, this._requires);
+    environment.set(this.id, this._requires);
     let oldState = this._requires.evaluate(environment);
     let listener = () => {
       let newState = this._requires.evaluate(environment);
@@ -53,6 +46,6 @@ export default class Region extends EventEmitter {
         oldState = newState;
       }
     };
-    environment.addListener(this._id, listener);
+    environment.addListener(this.id, listener);
   }
 }

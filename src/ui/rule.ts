@@ -1,7 +1,11 @@
 "use strict";
 
 class FieldLabel {
-  constructor(db, name) {
+  private _span: HTMLSpanElement;
+  private _db;
+  private _name: string;
+  private _cssClass: string;
+  constructor(db, name: string) {
     this._span = document.createElement('span');
     this._span.append(name);
     this._db = db;
@@ -89,6 +93,10 @@ function createRuleFieldHTML(db, container, item) {
  * This is a bit of "debug UI" for debugging the internal rule state.
  */
 export default class RuleUI {
+  private _db;
+  private _id;
+  private _rule;
+  private _div: HTMLDivElement;
   constructor(db, id, rule) {
     this._db = db;
     this._id = id;

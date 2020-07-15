@@ -1,4 +1,3 @@
-"use strict";
 /**
  * Main module for the tracker. This causes it to launch on startup.
  */
@@ -16,9 +15,9 @@ if (!Element.prototype.hasOwnProperty('append')) {
   }
 }
 
-import '../css/styles.less';
+import './css/styles.less';
 
-import TrackerUI from './tracker.js';
+import TrackerUI from './tracker';
 
 document.addEventListener('DOMContentLoaded', () => {
   let tracker = new TrackerUI();

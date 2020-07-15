@@ -1,45 +1,73 @@
-"use strict";
 /**
  * Describes the various locations.
  */
 
-import EventEmitter from './eventemitter.js';
+import EventEmitter from './eventemitter';
+import Rule from '../lib/rule';
 
-const Rule = require('../../lib/rule');
+export type LocationState = 'unavailable' | 'visible' | 'available' | 'partial';
 
 /**
  * Describes a location.
  */
 export default class Location extends EventEmitter {
+  private _required: Rule;
+  private _visible: Rule;
+  x: number;
+  y: number;
+  items;
+  type: string;
+  cleared = false;
+  protected _env: Rule.Environment | null = null;
+  _oldState: LocationState;
+
+  /**
+   * State when a location is entirely unavailable.
+   */
+  static readonly UNAVAILABLE: LocationState = 'unavailable';
+
+  /**
+   * State when items at a location are visible but not obtainable.
+   */
+  static readonly VISIBLE: LocationState = 'visible';
+
+  /**
+   * State when items at a location are all available.
+   */
+  static readonly AVAILABLE: LocationState = 'available';
+
+  /**
+   * State when items at a location are partially available.
+   */
+  static readonly PARTIALLY_AVAILABLE: LocationState = 'partial';
+
   /**
    * Creates a new location. This really isn't intended to be used directly and
    * should instead instances should be retrieved from the location DB.
    */
-  constructor(id, name, required, visible, x, y, items, type) {
+  constructor(
+    public readonly id: string,
+    public readonly name: string,
+    required: Rule.RuleDefinition,
+    visible: Rule.RuleDefinition,
+    x: number,
+    y: number,
+    items?: unknown[],
+    type?: string
+  ) {
     super();
-    this._id = id;
-    this._name = name;
     this._required = Rule.parse(required);
     this._visible = Rule.parse(visible);
     this.x = x;
     this.y = y;
     this.items = items;
     this.type = type ? type : 'item';
-    this.cleared = false;
-  }
-
-  get id() {
-    return this._id;
-  }
-
-  get name() {
-    return this._name;
   }
 
   /**
    * Determines if this location has items that are available.
    */
-  isAvailable(environment) {
+  isAvailable(environment: Rule.Environment): boolean {
     if (!environment) {
       environment = this._env;
     }
@@ -49,7 +77,7 @@ export default class Location extends EventEmitter {
   /**
    * Determines if this location has items that are visible.
    */
-  isVisible(environment) {
+  isVisible(environment: Rule.Environment): boolean {
     if (!environment) {
       environment = this._env;
     }
@@ -64,7 +92,7 @@ export default class Location extends EventEmitter {
    * Location.AVAILABLE - item can be retrieved
    * Location.PARTIALLY_AVAILABLE - some items are available, but not all
    */
-  getState(environment) {
+  getState(environment): LocationState {
     if (!environment) {
       environment = this._env;
     }
@@ -79,38 +107,28 @@ export default class Location extends EventEmitter {
    */
   bind(environment) {
     this._env = environment;
-    environment.set(this._id, this._required);
-    environment.set(this._id + '.visible', this._visible);
+    environment.set(this.id, this._required);
+    environment.set(this.id + '.visible', this._visible);
     let listener = () => { this._checkFlags(); };
-    environment.addListener(this._id, listener);
-    environment.addListener(this._id + ".visible", listener);
+    environment.addListener(this.id, listener);
+    environment.addListener(this.id + ".visible", listener);
   }
 
   _checkFlags() {
     let newState = this.getState(this._env);
     if (this._oldState != newState) {
-      this.fire(this._id, newState, this._oldState);
+      this.fire(this.id, newState, this._oldState);
       this._oldState = newState;
     }
   }
-}
 
-/**
- * State when a location is entirely unavailable.
- */
-Location.UNAVAILABLE = 'unavailable';
-/**
- * State when items at a location are visible but not obtainable.
- */
-Location.VISIBLE = 'visible';
-/**
- * State when items at a location are all available.
- */
-Location.AVAILABLE = 'available';
-/**
- * State when items at a location are partially available.
- */
-Location.PARTIALLY_AVAILABLE = 'partial';
+  /**
+   * Merge multiple locations into one. Generates a new MergeLocation.
+   */
+  static merge(id: string, name: string, x: number, y: number, locations: Location[]): MergeLocation {
+    return new MergeLocation(id, name, x, y, locations);
+  }
+}
 
 /**
  * A "Merge Location" is a special location that merges multiple locations into
@@ -118,7 +136,12 @@ Location.PARTIALLY_AVAILABLE = 'partial';
  * are available.
  */
 export class MergeLocation extends Location {
-  constructor(id, name, x, y, locations) {
+  id;
+  name;
+  x;
+  y;
+  private _subLocations;
+  constructor(id: string, name: string, x: number, y: number, locations: Location[]) {
     super(id, name, false, false, x, y);
     this._subLocations = locations;
   }
@@ -145,7 +168,7 @@ export class MergeLocation extends Location {
    * Location.AVAILABLE - item can be retrieved
    * Location.PARTIALLY_AVAILABLE - some items are available, but not all
    */
-  getState(environment) {
+  getState(environment: Rule.Environment): LocationState {
     if (!environment) {
       environment = this._env;
     }
@@ -164,7 +187,7 @@ export class MergeLocation extends Location {
       : (partial ? Location.PARTIALLY_AVAILABLE : (visible ? Location.VISIBLE : Location.UNAVAILABLE));
   }
 
-  bind(environment) {
+  bind(environment: Rule.Environment) {
     super.bind(environment);
     // Bind a listener for all of our sub locations
     let listener = () => { this._checkFlags(); };
@@ -173,11 +196,4 @@ export class MergeLocation extends Location {
       environment.addListener(subloc.id + ".visible", listener);
     }
   }
-}
-
-/**
- * Merge multiple locations into one. Generates a new MergeLocation.
- */
-Location.merge = function(id, name, x, y, locations) {
-  return new MergeLocation(id, name, x, y, locations);
 }
