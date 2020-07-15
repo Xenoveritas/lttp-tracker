@@ -1,9 +1,10 @@
 import Rule from '../lib/rule';
+import Item from './item';
+import Location from './location';
+import Region from './region';
+import Dungeon from './dungeon';
 
 export type LayoutDefinition = LayoutDefinition[] | string;
-export type Item = object;
-export type Region = object;
-export type Dungeon = object;
 
 export interface TrackerDataBase {
   rules: Record<string, Rule>;

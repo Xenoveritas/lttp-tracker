@@ -1,4 +1,4 @@
-import makeDB, { LOGICS } from './data.cson';
+import makeDB, { LOGICS, TrackerDataBase, LayoutDefinition } from './data.cson';
 
 import Rule from '../lib/rule';
 import Item from './item';
@@ -12,22 +12,22 @@ import Dungeon from './dungeon';
  * that maps these flags and deals with the various Rules that define when
  * things are available.
  */
-class DB {
+export class DB {
   environment = new Rule.Environment();
-  rules: Rule[];
-  items = { };
-  regions = { };
-  locations;
-  dungeons = { };
-  slots;
-  prizes;
-  layout;
-  defaults;
+  rules: Record<string, Rule>;
+  items: Record<string, Item> = { };
+  regions: Record<string, Region> = { };
+  locations: Record<string, Location>;
+  dungeons: Record<string, Dungeon> = { };
+  slots: Record<string, string>;
+  prizes: Record<string, string[]>;
+  layout: Record<string, LayoutDefinition>;
+  defaults: string[];
   /**
    * Create a new DB. This is not intended to be called directly, instead use
    * createDatabase to create a new DB.
    */
-  constructor(db) {
+  constructor(db: TrackerDataBase) {
     this.rules = db.rules;
     for (let item of db.items) {
       this.items[item.id] = item;
@@ -95,7 +95,7 @@ class DB {
 /**
  * Create a new database using the given logic.
  */
-export default function createDatabase(logic?) {
+export default function createDatabase(logic?: string): DB {
   return new DB(makeDB(logic, Rule, Item, Region, Location, Dungeon));
 }
 

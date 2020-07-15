@@ -1,10 +1,10 @@
-"use strict";
+import { DB } from '../db';
 
 /**
  * UI for displaying a legend of all items. (Also used to test the sprites.)
  */
 
-function capitalize(str) {
+function capitalize(str: string): string {
   return str.substring(0,1).toUpperCase() + str.substring(1);
 }
 
@@ -64,7 +64,7 @@ function makeDungeonPinEntry(items?: string, bossDefeatable?: boolean) {
   return li;
 }
 
-function makePrizeEntry(prize) {
+function makePrizeEntry(prize: string) {
   let css = 'prize';
   if (prize) {
     css += ' ' + prize;
@@ -94,7 +94,7 @@ function makeMedallionEntry(medallion: string, available = false, useable = fals
   return li;
 }
 
-function makeBossEntry(boss) {
+function makeBossEntry(boss: string) {
   let css = 'dungeon dungeon-' + boss;
   let li = document.createElement('li');
   li.append(makeIcon(css));
@@ -106,7 +106,7 @@ function makeBossEntry(boss) {
 
 export default class LegendUI {
   private _div: HTMLDivElement;
-  constructor(db) {
+  constructor(db: DB) {
     this._div = document.createElement('div');
     let list = document.createElement('ul');
     this._div.append(list);

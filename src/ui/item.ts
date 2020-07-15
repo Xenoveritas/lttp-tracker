@@ -1,4 +1,7 @@
-"use strict";
+import { DB } from '../db';
+import Item from '../item';
+
+export type ItemLayoutDefinition = string | string[];
 
 /**
  * Creates a UI element for an item.
@@ -11,9 +14,9 @@
  * distinct states as it shows two items: nothing, only bow, only silver arrows,
  * and both.
  */
-export function createItemUI(item, db, couldRecurseInfinitely?: boolean) {
+export function createItemUI(item: ItemLayoutDefinition, db: DB, couldRecurseInfinitely?: boolean): ItemUI | MultiItemUI {
   if (Array.isArray(item)) {
-    let uis = [];
+    let uis: ItemUI[] = [];
     for (let subItem of item) {
       uis.push(new ItemUI(subItem, db));
     }
@@ -37,12 +40,12 @@ export function createItemUI(item, db, couldRecurseInfinitely?: boolean) {
  * except that some equipment "cycles" through elements. Clicking on such items
  * progresses to the next one.
  *
- * @param {String} id the ID of the slot, used in some cases for when the slot
+ * @param id the ID of the slot, used in some cases for when the slot
  *     has nothing in it
- * @param {String|Array<String>} item the item itself or an array of items
+ * @param item the item itself or an array of items
  * @param db the game DB
  */
-export function createEquipmentUI(id, item, db) {
+export function createEquipmentUI(id: string, item: string | string[], db: DB) {
   if (Array.isArray(item)) {
     return new EquipmentUI(id, item, db);
   } else {
@@ -53,11 +56,10 @@ export function createEquipmentUI(id, item, db) {
 }
 
 export class ItemUI {
-  item;
-  db;
+  item: Item;
   private _div: HTMLDivElement;
   private _cssClass: string;
-  constructor(item, db) {
+  constructor(item: string, public db: DB) {
     // Item is currently a string ID, so get the actual item.
     this.item = db.items[item];
     if (this.item === undefined) {
@@ -97,11 +99,9 @@ export class ItemUI {
  * going away because it's annoying.
  */
 export class BowUI {
-  private _db;
   private _div: HTMLDivElement;
   private _state = 0;
-  constructor(db) {
-    this._db = db;
+  constructor(private db: DB) {
     this._div = document.createElement('div');
     //this._div.append(this.item.name);
     this._div.addEventListener('click', event => {
@@ -147,8 +147,8 @@ export class BowUI {
     this.update();
   }
   update() {
-    this._db.environment.set('bow', this.bowHeld);
-    this._db.environment.set('silver_arrows', this.silverArrowsHeld);
+    this.db.environment.set('bow', this.bowHeld);
+    this.db.environment.set('silver_arrows', this.silverArrowsHeld);
     let css = 'item item-';
     if (this.silverArrowsHeld) {
       css += 'silver-bow';
@@ -167,10 +167,8 @@ export class BowUI {
  * multiple ItemUIs into a single <div>.
  */
 export class MultiItemUI {
-  subUIs;
   private _div: HTMLDivElement;
-  constructor(subUIs) {
-    this.subUIs = subUIs;
+  constructor(public subUIs: ItemUI[]) {
     this._div = document.createElement('div');
     this._div.className = 'shared-item-slot';
     for (let subUI of subUIs) {
@@ -184,14 +182,14 @@ export class MultiItemUI {
 }
 
 export class EquipmentUI {
-  private _id;
-  private _items = [];
+  private _id: string;
+  private _items: Item[] = [];
   /**
    * Active item index.
    */
   private _index = 0;
   private _div: HTMLDivElement;
-  constructor(id, items, db) {
+  constructor(id: string, items: string[], db: DB) {
     this._id = id;
     for (let i = 0; i < items.length; i++) {
       if (items[i] === null) {

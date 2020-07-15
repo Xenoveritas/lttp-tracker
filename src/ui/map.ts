@@ -1,4 +1,6 @@
-"use strict";
+import Location from '../location';
+import Dungeon from '../dungeon';
+import { DB } from '../db';
 
 /**
  * Generic pin class for placing something on the map. Takes an x, y coordinate
@@ -6,7 +8,7 @@
  */
 class Pin {
   pin: HTMLDivElement;
-  constructor(x, y) {
+  constructor(x: number, y: number) {
     // Position the pin using CSS percents to allow the map to be resized.
     x = (x / 512) * 100;
     y = (y / 512) * 100;
@@ -27,11 +29,9 @@ class Pin {
 }
 
 class ItemPin extends Pin {
-  location;
   className: string;
-  constructor(location, x, y) {
+  constructor(public location: Location, x: number, y: number) {
     super(x, y);
-    this.location = location;
     this.className = 'pin pin-' + location.id + ' ';
     this.pin.setAttribute('title', location.name);
     this.pin.addEventListener('click', (event) => {
@@ -59,11 +59,9 @@ class ItemPin extends Pin {
 }
 
 class BasicPin extends Pin {
-  location;
   className: string;
-  constructor(location, x, y) {
+  constructor(public location: Location, x, y) {
     super(x, y);
-    this.location = location;
     this.className = 'pin pin-' + location.type;
     this.pin.setAttribute('title', location.name);
     this.location.addListener((location, state) => {
@@ -88,13 +86,11 @@ class BasicPin extends Pin {
  * A pin that represents a dungeon. Dungeons are a bit more complex.
  */
 class DungeonPin extends Pin {
-  dungeon;
   className: string;
   itemPinDiv: HTMLDivElement;
   bossPinDiv: HTMLDivElement;
-  constructor(dungeon, x, y) {
+  constructor(public dungeon: Dungeon, x: number, y: number) {
     super(x, y);
-    this.dungeon = dungeon;
     this.className = 'pin dungeon dungeon-' + dungeon.id + ' ';
     this.pin.setAttribute('title', dungeon.name);
     this.pin.append(this.itemPinDiv = document.createElement('div'));
@@ -131,7 +127,7 @@ class DungeonPin extends Pin {
 export default class MapUI {
   private _container: HTMLDivElement;
   private _div: HTMLDivElement;
-  constructor(world, db) {
+  constructor(world: string, db: DB) {
     this._container = document.createElement('div');
     this._container.className = 'map-container ' + world;
     this._div = document.createElement('div');

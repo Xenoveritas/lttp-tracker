@@ -15,7 +15,7 @@ export default class Location extends EventEmitter {
   private _visible: Rule;
   x: number;
   y: number;
-  items;
+  items: number;
   type: string;
   cleared = false;
   protected _env: Rule.Environment | null = null;
@@ -52,8 +52,8 @@ export default class Location extends EventEmitter {
     visible: Rule.RuleDefinition,
     x: number,
     y: number,
-    items?: unknown[],
-    type?: string
+    items: number,
+    type: string = 'item'
   ) {
     super();
     this._required = Rule.parse(required);
@@ -61,13 +61,13 @@ export default class Location extends EventEmitter {
     this.x = x;
     this.y = y;
     this.items = items;
-    this.type = type ? type : 'item';
+    this.type = type;
   }
 
   /**
    * Determines if this location has items that are available.
    */
-  isAvailable(environment: Rule.Environment): boolean {
+  isAvailable(environment?: Rule.Environment): boolean {
     if (!environment) {
       environment = this._env;
     }
@@ -77,7 +77,7 @@ export default class Location extends EventEmitter {
   /**
    * Determines if this location has items that are visible.
    */
-  isVisible(environment: Rule.Environment): boolean {
+  isVisible(environment?: Rule.Environment): boolean {
     if (!environment) {
       environment = this._env;
     }
@@ -92,7 +92,7 @@ export default class Location extends EventEmitter {
    * Location.AVAILABLE - item can be retrieved
    * Location.PARTIALLY_AVAILABLE - some items are available, but not all
    */
-  getState(environment): LocationState {
+  getState(environment?: Rule.Environment): LocationState {
     if (!environment) {
       environment = this._env;
     }
@@ -105,7 +105,7 @@ export default class Location extends EventEmitter {
    * field with the same name as the id reflects the state of the "required"
    * rule, and the name of id + ".visible" reflects the visible status.
    */
-  bind(environment) {
+  bind(environment: Rule.Environment) {
     this._env = environment;
     environment.set(this.id, this._required);
     environment.set(this.id + '.visible', this._visible);
@@ -136,28 +136,24 @@ export default class Location extends EventEmitter {
  * are available.
  */
 export class MergeLocation extends Location {
-  id;
-  name;
-  x;
-  y;
-  private _subLocations;
+  private _subLocations: Location[];
   constructor(id: string, name: string, x: number, y: number, locations: Location[]) {
-    super(id, name, false, false, x, y);
+    super(id, name, false, false, x, y, 0);
     this._subLocations = locations;
   }
 
   /**
    * Determines if this location has items that are available.
    */
-  isAvailable(db) {
-    return this._subLocations.every(location => location.isAvailable(db));
+  isAvailable(environment: Rule.Environment) {
+    return this._subLocations.every(location => location.isAvailable(environment));
   }
 
   /**
    * Determines if this location has items that are visible.
    */
-  isVisible(db) {
-    return this._subLocations.every(location => location.isVisible(db));
+  isVisible(environment: Rule.Environment) {
+    return this._subLocations.every(location => location.isVisible(environment));
   }
 
   /**
@@ -187,7 +183,7 @@ export class MergeLocation extends Location {
       : (partial ? Location.PARTIALLY_AVAILABLE : (visible ? Location.VISIBLE : Location.UNAVAILABLE));
   }
 
-  bind(environment: Rule.Environment) {
+  bind(environment: Rule.Environment): void {
     super.bind(environment);
     // Bind a listener for all of our sub locations
     let listener = () => { this._checkFlags(); };

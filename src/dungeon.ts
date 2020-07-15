@@ -26,19 +26,19 @@ export class Boss {
   get name() { return this._name; }
   get hasPrize() { return this._hasPrize; }
 
-  isAccessible(environment) {
+  isAccessible(environment: Rule.Environment): boolean {
     if (!environment)
       environment = this._env;
     return this._access.evaluate(environment);
   }
 
-  isDefeatable(environment) {
+  isDefeatable(environment: Rule.Environment): boolean {
     if (!environment)
       environment = this._env;
     return this._access.evaluate(environment) && this._defeat.evaluate(environment);
   }
 
-  bind(environment) {
+  bind(environment: Rule.Environment): void {
     this._env = environment;
     environment.set(this._name + '.access', this._access);
     environment.set(this._name + '.defeat', this._defeat);
@@ -61,13 +61,13 @@ export class Item {
     this._type = type;
   }
 
-  isAccessible(environment) {
+  isAccessible(environment: Rule.Environment): boolean {
     if (!environment)
       environment = this._env;
     return this._access.evaluate(environment);
   }
 
-  _bind(parent, environment) {
+  _bind(parent: string, environment: Rule.Environment): string {
     this._env = environment;
     this._id = parent + '.' + this._name;
     environment.set(this._id, this._access);
@@ -81,11 +81,16 @@ export class Item {
 export default class Dungeon extends EventEmitter {
   private _id: string;
   private _enter: Rule;
-  private _boss;
-  private _items;
-  private _keys;
-  private _notInPool;
-  private _medallion;
+  private _boss: Boss;
+  private _items: Item[];
+  private _keys: number;
+  /**
+   * Not in pool is simply a list of possible actual items that are not in
+   * the chest pool. (For example, the Big Key in Castle Escape drops from an
+   * enemy, and is not found in a chest.)
+   */
+  private _notInPool: string[] | null;
+  private _medallion: string | null;
   private _itemCount: number;
   private _env: Rule.Environment;
   public cleared = false;
@@ -96,9 +101,9 @@ export default class Dungeon extends EventEmitter {
   constructor(
     public readonly id: string,
     public readonly name: string,
-    enter, boss, items, keys,
+    enter: Rule, boss: Boss, items: Item[], keys: number,
     public x: number,
-    public y: number, notInPool, medallion) {
+    public y: number, notInPool: string[] | null, medallion: string | null) {
     super();
     this._enter = Rule.parse(enter);
     this._boss = boss;
@@ -126,7 +131,7 @@ export default class Dungeon extends EventEmitter {
   /**
    * Get the medallion, if any. (This indicates the ID of the rule.)
    */
-  get medallion() {
+  get medallion(): string | null {
     return this._medallion;
   }
 
@@ -134,7 +139,7 @@ export default class Dungeon extends EventEmitter {
    * Gets the total number of treasures (that is, items that aren't keys, the
    * map, or the compass) in this dungeon.
    */
-  get treasureCount() {
+  get treasureCount(): number {
     return this._itemCount;
   }
 
@@ -142,14 +147,14 @@ export default class Dungeon extends EventEmitter {
    * Gets the total number of randomizer locations, including any keys, the map,
    * and the compass in the pool.
    */
-  get totalItemCount() {
+  get totalItemCount(): number {
     return this._items.length;
   }
 
   /**
    * Determines if this dungeon can even be entered.
    */
-  isEnterable(environment) {
+  isEnterable(environment?: Rule.Environment): boolean {
     if (!environment) {
       environment = this._env;
     }
@@ -159,7 +164,7 @@ export default class Dungeon extends EventEmitter {
   /**
    * Determines if this dungeon can be completed (except for the boss).
    */
-  isCompletable(environment) {
+  isCompletable(environment?: Rule.Environment): boolean {
     return this.getAccessibleItemCount(environment) >= this._items.length;
   }
 
@@ -167,7 +172,7 @@ export default class Dungeon extends EventEmitter {
    * Gets the total number of accessible items (that includes all items, even if
    * they turn out to have a key or map or compass).
    */
-  getAccessibleItemCount(environment) {
+  getAccessibleItemCount(environment?: Rule.Environment): number {
     if (!environment) {
       environment = this._env;
     }
@@ -182,7 +187,7 @@ export default class Dungeon extends EventEmitter {
   /**
    * Determines if the boss of the dungeon can be defeated.
    */
-  isBossDefeatable(environment) {
+  isBossDefeatable(environment?: Rule.Environment): boolean {
     if (this._boss === null) {
       // If there is no boss, it's always defeatable, I guess.
       return true;
@@ -203,7 +208,7 @@ export default class Dungeon extends EventEmitter {
    * Note that the boss fields do NOT check the enter state and may be flagged
    * even when the boss isn't available.
    */
-  bind(environment) {
+  bind(environment: Rule.Environment): void {
     this._env = environment;
     let oldEnter = this._enter.evaluate(environment),
       oldDefeatable = this.isBossDefeatable(environment),

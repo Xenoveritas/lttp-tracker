@@ -1,6 +1,6 @@
 "use strict";
 
-export type EventListener = (event: object) => void;
+export type EventListener = (...args: any[]) => void;
 
 /**
  * Simple class for handling event listeners.
@@ -17,7 +17,7 @@ export default class EventEmitter {
    * Fires an event to every listener. (This within the events will be the
    * event emitter itself.)
    */
-  fire(...args): void {
+  fire(...args: any[]): void {
     if (this.listeners !== null) {
       for (let listener of this.listeners) {
         try {
@@ -30,14 +30,14 @@ export default class EventEmitter {
     }
   }
 
-  addListener(listener) {
+  addListener(listener: EventListener): void {
     if (this.listeners === null) {
       this.listeners = [];
     }
     this.listeners.push(listener);
   }
 
-  removeListener(listener) {
+  removeListener(listener: EventListener): void {
     if (this.listeners !== null) {
       for (let i = 0; i < this.listeners.length; i++) {
         if (this.listeners[i] === listener) {

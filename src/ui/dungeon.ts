@@ -1,5 +1,5 @@
-"use strict";
-
+import { DB } from '../db';
+import Dungeon from '../dungeon';
 import Rule from '../../lib/rule';
 
 /**
@@ -10,14 +10,14 @@ import Rule from '../../lib/rule';
  * Class for the dungeon UI.
  */
 export default class DungeonUI {
-  dungeon;
+  dungeon: Dungeon;
   tracker;
   private _div: HTMLDivElement;
   private _className: string;
   private _prizeUI;
   private _medallionUI;
   private _cleared = false;
-  constructor(tracker, dungeon, db) {
+  constructor(tracker, dungeon: string, db: DB) {
     if (!(dungeon in db.dungeons)) {
       throw new Error("Unknown dungeon " + dungeon);
     }
