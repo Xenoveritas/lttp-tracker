@@ -79,7 +79,6 @@ export class Item {
  * Describes a dungeon.
  */
 export default class Dungeon extends EventEmitter {
-  private _id: string;
   private _enter: Rule;
   private _boss: Boss;
   private _items: Item[];
@@ -235,17 +234,17 @@ export default class Dungeon extends EventEmitter {
         nextEvent = setTimeout(processEvent, 0);
       }
     };
-    environment.set(this._id + ".enter", this._enter);
+    environment.set(this.id + ".enter", this._enter);
     if (this._boss) {
       this._boss.bind(environment);
       environment.addListener(this._boss.name + '.access', listener);
       environment.addListener(this._boss.name + '.defeat', listener);
     }
     this._items.forEach(item => {
-      let id = item._bind(this._id, environment);
+      let id = item._bind(this.id, environment);
       environment.addListener(id, listener);
     });
-    environment.addListener(this._id + ".enter", listener);
+    environment.addListener(this.id + ".enter", listener);
   }
 
   static Boss = Boss;

@@ -51,7 +51,7 @@ export class DB {
    * original state (which also removes all bound listeners).
    */
   reset() {
-    let id;
+    let id: string;
     this.environment.clear();
     for (id in this.rules) {
       this.environment.set(id, this.rules[id]);
@@ -81,13 +81,13 @@ export class DB {
    * If rules have been modified, they are not modified back.
    */
   softReset() {
-    let id, defaultMap = new Map();
+    let id: string, defaultSet = new Set<string>();
     for (id of this.defaults) {
-      defaultMap.set(id, true);
+      defaultSet.add(id);
     }
     for (let id of this.environment.keys()) {
       if (!this.environment.isBoundToRule(id))
-        this.environment.set(id, defaultMap.has(id));
+        this.environment.set(id, defaultSet.has(id));
     }
   }
 }

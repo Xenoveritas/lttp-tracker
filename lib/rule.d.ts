@@ -1,6 +1,6 @@
 export namespace Rule {
   export type ValueType = Rule | boolean;
-  export type ValueListener = () => void;
+  export type ValueListener = (name: string, value: boolean, environment: Environment) => void;
 
   export class Value {
     readonly value: boolean;

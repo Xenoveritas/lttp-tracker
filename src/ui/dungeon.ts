@@ -53,7 +53,7 @@ export default class DungeonUI {
   get prize() {
     return this._prizeUI ? this._prizeUI.prize : null;
   }
-  get bossDefeated() {
+  get bossDefeated(): boolean {
     return this._cleared;
   }
   set bossDefeated(value) {
