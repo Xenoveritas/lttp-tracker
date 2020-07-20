@@ -50,18 +50,13 @@ import Dungeon from './dungeon';
 export function createDefaultDatabase() {
   let rules = {
 `);
-  let rules = data.rules, comma = false;
+  let rules = data.rules;
   for (let id in rules) {
-    if (comma) {
-      output.write(',\n');
-    } else {
-      comma = true;
-    }
     let rule = rules[id];
     if ('requires' in rule) {
       // Make sure the rule works.
       Rule.parse(rule.requires);
-      output.write(`    ${JSON.stringify(id)}: Rule.parse(${JSON.stringify(rule['requires'])})`);
+      output.write(`    ${JSON.stringify(id)}: Rule.parse(${JSON.stringify(rule['requires'])}),\n`);
     } else {
       throw new Error(`Missing requires in rule ${id}: rule must have some requirement.`);
     }
@@ -71,13 +66,7 @@ export function createDefaultDatabase() {
   let regions = [
 `);
   let regions = data['regions'];
-  comma = false;
   for (let id in regions) {
-    if (comma) {
-      output.write(',\n');
-    } else {
-      comma = true;
-    }
     let region = regions[id], requires: RuleDefinition = true;
     let name = region.name;
     if (!name)
@@ -87,26 +76,19 @@ export function createDefaultDatabase() {
       // Make sure the rule works.
       Rule.parse(requires);
     }
-    output.write(`    new Region(${JSON.stringify(id)}, ${JSON.stringify(name)}, ${JSON.stringify(requires)})`);
+    output.write(`    new Region(${JSON.stringify(id)}, ${JSON.stringify(name)}, ${JSON.stringify(requires)}),\n`);
   }
   output.write('\n  ];\n  let items = [\n');
   let items = data.items;
-  comma = false;
   for (let id in items) {
     let item = items[id];
     let name = item.name;
     if (!name)
       name = 'Unknown';
-    if (comma) {
-      output.write(",\n");
-    } else {
-      comma = true;
-    }
-    output.write(`    new Item(${JSON.stringify(id)}, ${JSON.stringify(name)})`);
+    output.write(`    new Item(${JSON.stringify(id)}, ${JSON.stringify(name)}),\n`);
   }
   output.write(`\n  ];\n  let locations = {\n`);
   let locations = data['locations'], mergeLocations: Record<string, LocationConfig> = {};
-  comma = false;
   for (let id in locations) {
     let location = locations[id];
     if ('merge' in location) {
@@ -139,16 +121,11 @@ export function createDefaultDatabase() {
           items = 0;
         }
       }
-      if (comma) {
-        output.write(",\n");
-      } else {
-        comma = true;
-      }
       output.write(`    ${JSON.stringify(id)}: new Location(${JSON.stringify(id)}, ${JSON.stringify(name)}, ${JSON.stringify(requires)}, ${JSON.stringify(visible)}, ${getCoords(location)}, ${JSON.stringify(items)}`);
       if (type !== 'item') {
         output.write(`, ${JSON.stringify(type)}`);
       }
-      output.write(')');
+      output.write('),\n');
     }
   }
   output.write('\n  };');
@@ -158,20 +135,13 @@ export function createDefaultDatabase() {
     if (!name)
       name = 'Unknown';
     output.write(`\n  locations[${JSON.stringify(id)}] = Location.merge(${JSON.stringify(id)}, ${JSON.stringify(name)}, ${getCoords(location)}, [`);
-    comma = false;
     for (let subLocation of location['merge']) {
-      if (comma) {
-        output.write(', ');
-      } else {
-        comma = true;
-      }
-      output.write(`locations[${JSON.stringify(subLocation)}]`);
+      output.write(`locations[${JSON.stringify(subLocation)}],\n`);
     }
     output.write(']);');
   }
   output.write(`\n  let dungeons = [\n`);
   let dungeons = data['dungeons'];
-  comma = false;
   for (let id in dungeons) {
     let dungeon = dungeons[id], keys = 0;
     let name = dungeon['name'];
@@ -185,11 +155,6 @@ export function createDefaultDatabase() {
     }
     if ('keys' in dungeon) {
       keys = dungeon['keys'];
-    }
-    if (comma) {
-      output.write(",\n");
-    } else {
-      comma = true;
     }
     // Pre-stringify a bunch of stuff that'll be inserted into JS code:
     id = JSON.stringify(id);
@@ -272,7 +237,7 @@ export function createDefaultDatabase() {
         name = JSON.stringify(name);
         access = JSON.stringify(access);
         type = JSON.stringify(type);
-        output.write(`\n      new Dungeon.Item(${name}, ${access}, ${type})`);
+        output.write(`\n      new Dungeon.ItemLocation(${name}, ${access}, ${type})`);
       });
       output.write(']');
     } else {
@@ -305,7 +270,7 @@ export function createDefaultDatabase() {
         throw new Error("Invalid medallion value: " + JSON.stringify(medallion));
       output.write(`, ${JSON.stringify(medallion)}`);
     }
-    output.write(')');
+    output.write('),\n');
   }
   // For slot, prize, layout information, and defaults, just paste it through.
   let defaults = data['defaults'];
@@ -329,7 +294,6 @@ export function createDefaultDatabase() {
 `);
   // Now deal with logics.
   output.write('export let LOGICS = {\n');
-  comma = false;
   let genericLogic = null;
   for (let id in data.logics) {
     if (genericLogic === null) {
@@ -339,12 +303,7 @@ export function createDefaultDatabase() {
     let name = id[0].toUpperCase() + id.substring(1);
     if ('name' in logic)
       name = logic.name;
-    if (comma) {
-      output.write(',\n');
-    } else {
-      comma = true;
-    }
-    output.write(`  ${JSON.stringify(id)}: ${JSON.stringify(name)}`);
+    output.write(`  ${JSON.stringify(id)}: ${JSON.stringify(name)},\n`);
   }
   output.write(`
 };

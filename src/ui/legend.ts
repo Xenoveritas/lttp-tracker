@@ -1,4 +1,4 @@
-import { DB } from '../db';
+import DB from '../db';
 
 /**
  * UI for displaying a legend of all items. (Also used to test the sprites.)

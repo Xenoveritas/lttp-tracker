@@ -1,6 +1,6 @@
 "use strict";
 
-import { DB } from "../db";
+import DB from "../db";
 import Rule from "../rule";
 
 class FieldLabel {

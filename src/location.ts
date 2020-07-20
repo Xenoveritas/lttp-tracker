@@ -2,15 +2,16 @@
  * Describes the various locations.
  */
 
-import EventEmitter from './eventemitter';
 import Rule, { Environment, RuleDefinition } from './rule';
 
 export type LocationState = 'unavailable' | 'visible' | 'available' | 'partial';
 
+export type LocationListener = (location: Location) => void;
+
 /**
  * Describes a location.
  */
-export default class Location extends EventEmitter {
+export default class Location {
   private _required: Rule;
   private _visible: Rule;
   x: number;
@@ -18,8 +19,6 @@ export default class Location extends EventEmitter {
   items: number;
   type: string;
   cleared = false;
-  protected _env: Environment | null = null;
-  _oldState: LocationState;
 
   /**
    * State when a location is entirely unavailable.
@@ -55,7 +54,6 @@ export default class Location extends EventEmitter {
     items: number,
     type: string = 'item'
   ) {
-    super();
     this._required = Rule.parse(required);
     this._visible = Rule.parse(visible);
     this.x = x;
@@ -64,13 +62,14 @@ export default class Location extends EventEmitter {
     this.type = type;
   }
 
+  get visibleRuleId() {
+    return this.id + '.visible';
+  }
+
   /**
    * Determines if this location has items that are available.
    */
-  isAvailable(environment?: Environment): boolean {
-    if (!environment) {
-      environment = this._env;
-    }
+  isAvailable(environment: Environment): boolean {
     return this._required.evaluate(environment);
   }
 
@@ -78,9 +77,6 @@ export default class Location extends EventEmitter {
    * Determines if this location has items that are visible.
    */
   isVisible(environment?: Environment): boolean {
-    if (!environment) {
-      environment = this._env;
-    }
     return this._visible.evaluate(environment);
   }
 
@@ -92,10 +88,7 @@ export default class Location extends EventEmitter {
    * Location.AVAILABLE - item can be retrieved
    * Location.PARTIALLY_AVAILABLE - some items are available, but not all
    */
-  getState(environment?: Environment): LocationState {
-    if (!environment) {
-      environment = this._env;
-    }
+  getState(environment: Environment): LocationState {
     return this.isAvailable(environment) ? Location.AVAILABLE
       : (this.isVisible(environment) ? Location.VISIBLE : Location.UNAVAILABLE);
   }
@@ -106,20 +99,23 @@ export default class Location extends EventEmitter {
    * rule, and the name of id + ".visible" reflects the visible status.
    */
   bind(environment: Environment) {
-    this._env = environment;
     environment.set(this.id, this._required);
-    environment.set(this.id + '.visible', this._visible);
-    let listener = () => { this._checkFlags(); };
-    environment.addListener(this.id, listener);
-    environment.addListener(this.id + ".visible", listener);
+    environment.set(this.visibleRuleId, this._visible);
   }
 
-  _checkFlags() {
-    let newState = this.getState(this._env);
-    if (this._oldState != newState) {
-      this.fire(this.id, newState, this._oldState);
-      this._oldState = newState;
-    }
+  /**
+   * This binds a listener that indicates when the location's state changes
+   * within a given environment. It is strictly a pass-through listener - it
+   * binds to the underlying environment.
+   * @param environment the environment to bind to
+   * @param listener a listener that will fire whenever the state in that environment changes
+   */
+  addStateListener(environment: Environment, listener: LocationListener) {
+    const l = () => {
+      listener(this);
+    };
+    environment.addListener(this.id, l);
+    environment.addListener(this.visibleRuleId, l);
   }
 
   /**
@@ -165,9 +161,6 @@ export class MergeLocation extends Location {
    * Location.PARTIALLY_AVAILABLE - some items are available, but not all
    */
   getState(environment: Environment): LocationState {
-    if (!environment) {
-      environment = this._env;
-    }
     let partial = false, available = true, visible = true;
     for (let location of this._subLocations) {
       if (location.isAvailable(environment)) {
@@ -185,11 +178,5 @@ export class MergeLocation extends Location {
 
   bind(environment: Environment): void {
     super.bind(environment);
-    // Bind a listener for all of our sub locations
-    let listener = () => { this._checkFlags(); };
-    for (let subloc of this._subLocations) {
-      environment.addListener(subloc.id, listener);
-      environment.addListener(subloc.id + ".visible", listener);
-    }
   }
 }

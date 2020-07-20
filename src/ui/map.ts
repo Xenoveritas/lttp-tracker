@@ -1,13 +1,13 @@
 import Location from '../location';
 import Dungeon from '../dungeon';
-import { DB } from '../db';
+import DB from '../db';
 
 /**
  * Generic pin class for placing something on the map. Takes an x, y coordinate
  * and generates a <div> that can be placed there. And that's it.
  */
 class Pin {
-  pin: HTMLDivElement;
+  protected pin: HTMLDivElement;
   constructor(x: number, y: number) {
     // Position the pin using CSS percents to allow the map to be resized.
     x = (x / 512) * 100;
@@ -28,19 +28,38 @@ class Pin {
   }
 }
 
-class ItemPin extends Pin {
+class BasicPin extends Pin {
   className: string;
-  constructor(public location: Location, x: number, y: number) {
+  constructor(public location: Location, x: number, y: number, protected db: DB) {
     super(x, y);
-    this.className = 'pin pin-' + location.id + ' ';
+    this.className = 'pin pin-' + location.type;
     this.pin.setAttribute('title', location.name);
-    this.pin.addEventListener('click', (event) => {
+    this.location.addStateListener(db.environment, () => {
+      this.update();
+    });
+    this.update();
+  }
+
+  /**
+   * Updates the UI state to match the model.
+   */
+  update() {
+    let style = this.className;
+    if (this.location.isAvailable(this.db.environment)) {
+      style += ' available';
+    }
+    this.pin.className = style;
+  }
+}
+
+class ItemPin extends BasicPin {
+  constructor(public location: Location, x: number, y: number, db: DB) {
+    super(location, x, y, db);
+    this.className = 'pin pin-' + location.id + ' ';
+    this.pin.addEventListener('click', () => {
       this.location.cleared = !this.location.cleared;
       this.update();
     }, false);
-    this.location.addListener((location, state) => {
-      this.update();
-    });
     this.update();
   }
 
@@ -52,33 +71,9 @@ class ItemPin extends Pin {
     if (this.location.cleared) {
       state = 'cleared';
     } else {
-      state = this.location.getState();
+      state = this.location.getState(this.db.environment);
     }
     this.pin.className = this.className + state;
-  }
-}
-
-class BasicPin extends Pin {
-  className: string;
-  constructor(public location: Location, x: number, y: number) {
-    super(x, y);
-    this.className = 'pin pin-' + location.type;
-    this.pin.setAttribute('title', location.name);
-    this.location.addListener((location, state) => {
-      this.update();
-    });
-    this.update();
-  }
-
-  /**
-   * Updates the UI state to match the model.
-   */
-  update() {
-    let style = this.className;
-    if (this.location.isAvailable()) {
-      style += ' available';
-    }
-    this.pin.className = style;
   }
 }
 
@@ -89,7 +84,7 @@ class DungeonPin extends Pin {
   className: string;
   itemPinDiv: HTMLDivElement;
   bossPinDiv: HTMLDivElement;
-  constructor(public dungeon: Dungeon, x: number, y: number) {
+  constructor(public dungeon: Dungeon, x: number, y: number, private db: DB) {
     super(x, y);
     this.className = 'pin dungeon dungeon-' + dungeon.id + ' ';
     this.pin.setAttribute('title', dungeon.name);
@@ -97,7 +92,7 @@ class DungeonPin extends Pin {
     this.itemPinDiv.className = 'items';
     this.pin.append(this.bossPinDiv = document.createElement('div'));
     this.bossPinDiv.className = 'boss';
-    this.dungeon.addListener(() => { this.update(); });
+    this.dungeon.addListener(this.db.environment, () => { this.update(); });
     this.update();
   }
 
@@ -106,16 +101,16 @@ class DungeonPin extends Pin {
    */
   update() {
     let state;
-    if (this.dungeon.isEnterable()) {
+    if (this.dungeon.isEnterable(this.db.environment)) {
       state = "open";
     } else {
       state = "closed";
     }
-    let available = this.dungeon.getAccessibleItemCount();
+    let available = this.dungeon.getAccessibleItemCount(this.db.environment);
     this.itemPinDiv.innerHTML = available + "/" + this.dungeon.totalItemCount;
     this.itemPinDiv.className = 'items ' + (available === 0 ? 'items-none' :
       (available < this.dungeon.totalItemCount ? 'items-partial' : 'items-all'));
-    this.bossPinDiv.className = 'boss ' + (this.dungeon.isBossDefeatable() ? 'boss-defeatable' : 'boss-unavailable');
+    this.bossPinDiv.className = 'boss ' + (this.dungeon.isBossDefeatable(this.db.environment) ? 'boss-defeatable' : 'boss-unavailable');
     this.pin.className = this.className + state;
   }
 }
@@ -144,9 +139,9 @@ export default class MapUI {
       if (location.x !== null && location.y !== null) {
         if (location.x >= min && location.x < max) {
           if (location.type === 'item') {
-            this._div.append(new ItemPin(location, location.x - min, location.y).element);
+            this._div.append(new ItemPin(location, location.x - min, location.y, db).element);
           } else {
-            this._div.append(new BasicPin(location, location.x - min, location.y).element);
+            this._div.append(new BasicPin(location, location.x - min, location.y, db).element);
           }
         }
       }
@@ -156,7 +151,7 @@ export default class MapUI {
       let dungeon = db.dungeons[id];
       if (dungeon.x !== null && dungeon.y !== null) {
         if (dungeon.x >= min && dungeon.x < max) {
-          this._div.append(new DungeonPin(dungeon, dungeon.x - min, dungeon.y).element);
+          this._div.append(new DungeonPin(dungeon, dungeon.x - min, dungeon.y, db).element);
         }
       }
     }

@@ -48,7 +48,7 @@ export class Boss {
 /**
  * An item location within a dungeon.
  */
-export class Item {
+export class ItemLocation {
   private _id: string;
   private _name: string;
   private _access: Rule;
@@ -61,27 +61,32 @@ export class Item {
     this._type = type;
   }
 
+  get id(): string {
+    return this._id;
+  }
+
   isAccessible(environment: Environment): boolean {
     if (!environment)
       environment = this._env;
     return this._access.evaluate(environment);
   }
 
-  _bind(parent: string, environment: Environment): string {
+  _bind(parent: string, environment: Environment): void {
     this._env = environment;
     this._id = parent + '.' + this._name;
     environment.set(this._id, this._access);
-    return this._id;
   }
 }
+
+export type DungeonListener = (dungeon: Dungeon) => void;
 
 /**
  * Describes a dungeon.
  */
-export default class Dungeon extends EventEmitter {
+export default class Dungeon {
   private _enter: Rule;
   private _boss: Boss;
-  private _items: Item[];
+  private _items: ItemLocation[];
   private _keys: number;
   /**
    * Not in pool is simply a list of possible actual items that are not in
@@ -91,7 +96,6 @@ export default class Dungeon extends EventEmitter {
   private _notInPool: string[] | null;
   private _medallion: string | null;
   private _itemCount: number;
-  private _env: Environment;
   public cleared = false;
   /**
    * Creates a new Dungeon. This really isn't intended to be used directly and
@@ -100,10 +104,9 @@ export default class Dungeon extends EventEmitter {
   constructor(
     public readonly id: string,
     public readonly name: string,
-    enter: RuleDefinition, boss: Boss, items: Item[], keys: number,
+    enter: RuleDefinition, boss: Boss, items: ItemLocation[], keys: number,
     public x: number,
     public y: number, notInPool: string[] | null, medallion: string | null) {
-    super();
     this._enter = Rule.parse(enter);
     this._boss = boss;
     this._items = items;
@@ -153,17 +156,14 @@ export default class Dungeon extends EventEmitter {
   /**
    * Determines if this dungeon can even be entered.
    */
-  isEnterable(environment?: Environment): boolean {
-    if (!environment) {
-      environment = this._env;
-    }
+  isEnterable(environment: Environment): boolean {
     return this._enter.evaluate(environment);
   }
 
   /**
    * Determines if this dungeon can be completed (except for the boss).
    */
-  isCompletable(environment?: Environment): boolean {
+  isCompletable(environment: Environment): boolean {
     return this.getAccessibleItemCount(environment) >= this._items.length;
   }
 
@@ -171,10 +171,7 @@ export default class Dungeon extends EventEmitter {
    * Gets the total number of accessible items (that includes all items, even if
    * they turn out to have a key or map or compass).
    */
-  getAccessibleItemCount(environment?: Environment): number {
-    if (!environment) {
-      environment = this._env;
-    }
+  getAccessibleItemCount(environment: Environment): number {
     // If you can't enter, then no items can be taken.
     if (!this.isEnterable(environment))
       return 0;
@@ -186,16 +183,59 @@ export default class Dungeon extends EventEmitter {
   /**
    * Determines if the boss of the dungeon can be defeated.
    */
-  isBossDefeatable(environment?: Environment): boolean {
+  isBossDefeatable(environment: Environment): boolean {
     if (this._boss === null) {
       // If there is no boss, it's always defeatable, I guess.
       return true;
     }
-    if (!environment) {
-      environment = this._env;
-    }
     // TODO: Reimplement this.
     return this.isEnterable(environment) && this._boss.isDefeatable(environment);
+  }
+
+  /**
+   * Adds listeners to the various fields within the environment that map when the
+   * dungeon state may change.
+   *
+   * @param environment the environment to add the listeners to
+   */
+  addListener(environment: Environment, listener: DungeonListener): void {
+    // For now, since there aren't a lot of things that listen to dungeons,
+    // go ahead and waste memory by recreating this closure each time a
+    // listener is added. In the future, it may make sense to try and
+    // "cache" environment/listener pairs.
+    let oldEnter = this._enter.evaluate(environment),
+      oldDefeatable = this.isBossDefeatable(environment),
+      oldItemCount = this.getAccessibleItemCount(environment),
+      nextEvent: NodeJS.Timeout | boolean = false;
+    const processEvent = () => {
+      // Blank out the next event.
+      nextEvent = false;
+      let newEnter = this._enter.evaluate(environment),
+        newDefeatable = this.isBossDefeatable(environment),
+        newItemCount = this.getAccessibleItemCount(environment);
+      if (oldEnter !== newEnter || oldDefeatable !== newDefeatable || oldItemCount !== newItemCount) {
+        listener(this);
+      }
+      oldEnter = newEnter;
+      oldDefeatable = newDefeatable;
+      oldItemCount = newItemCount;
+    }
+    const l = () => {
+      // Because this listener can potentially be called many times in a row,
+      // rather than immediately fire again, just defer to the end of the event
+      // loop, thereby only checking if we need to fire the event once.
+      if (nextEvent === false) {
+        nextEvent = setTimeout(processEvent, 0);
+      }
+    };
+    environment.addListener(this.id + ".enter", l);
+    if (this._boss) {
+      environment.addListener(this._boss.name + '.access', l);
+      environment.addListener(this._boss.name + '.defeat', l);
+    }
+    this._items.forEach(item => {
+      environment.addListener(item.id, l);
+    });
   }
 
   /**
@@ -208,45 +248,15 @@ export default class Dungeon extends EventEmitter {
    * even when the boss isn't available.
    */
   bind(environment: Environment): void {
-    this._env = environment;
-    let oldEnter = this._enter.evaluate(environment),
-      oldDefeatable = this.isBossDefeatable(environment),
-      oldItemCount = this.getAccessibleItemCount(environment),
-      nextEvent: NodeJS.Timeout | boolean = false;
-    let processEvent = () => {
-      // Blank out the next event.
-      nextEvent = false;
-      let newEnter = this._enter.evaluate(environment),
-        newDefeatable = this.isBossDefeatable(environment),
-        newItemCount = this.getAccessibleItemCount(environment);
-      if (oldEnter !== newEnter || oldDefeatable !== newDefeatable || oldItemCount !== newItemCount) {
-        this.fire();
-      }
-      oldEnter = newEnter;
-      oldDefeatable = newDefeatable;
-      oldItemCount = newItemCount;
-    }
-    let listener = () => {
-      // Because this listener can potentially be called many times in a row,
-      // rather than immediately fire again, just defer to the end of the event
-      // loop, thereby only checking if we need to fire the event once.
-      if (nextEvent === false) {
-        nextEvent = setTimeout(processEvent, 0);
-      }
-    };
     environment.set(this.id + ".enter", this._enter);
     if (this._boss) {
       this._boss.bind(environment);
-      environment.addListener(this._boss.name + '.access', listener);
-      environment.addListener(this._boss.name + '.defeat', listener);
     }
     this._items.forEach(item => {
-      let id = item._bind(this.id, environment);
-      environment.addListener(id, listener);
+      item._bind(this.id, environment);
     });
-    environment.addListener(this.id + ".enter", listener);
   }
 
   static Boss = Boss;
-  static Item = Item;
+  static ItemLocation = ItemLocation;
 }

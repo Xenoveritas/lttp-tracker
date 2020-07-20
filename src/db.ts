@@ -12,8 +12,8 @@ import Dungeon from './dungeon';
  * that maps these flags and deals with the various Rules that define when
  * things are available.
  */
-export class DB {
-  environment = new Rule.Environment();
+export default class DB {
+  readonly environment = new Rule.Environment();
   rules: Record<string, Rule>;
   items: Record<string, Item> = { };
   regions: Record<string, Region> = { };
@@ -22,12 +22,16 @@ export class DB {
   slots: Record<string, string>;
   prizes: Record<string, string[]>;
   layout: LayoutDefinition;
-  defaults: string[];
+  defaults: Set<string>;
+
   /**
-   * Create a new DB. This is not intended to be called directly, instead use
-   * createDatabase to create a new DB.
+   * Create a new DB using either the given logic ID or the tracker database
+   * information.
    */
-  constructor(db: TrackerDataBase) {
+  constructor(logic?: string | TrackerDataBase) {
+    let db: TrackerDataBase =
+      typeof logic === 'string' || typeof logic === 'undefined' ?
+        makeDB(logic) : logic;
     this.rules = db.rules;
     for (let item of db.items) {
       this.items[item.id] = item;
@@ -42,7 +46,7 @@ export class DB {
     this.slots = db.slots;
     this.prizes = db.prizes;
     this.layout = db.layout;
-    this.defaults = db.defaults;
+    this.defaults = new Set<string>(db.defaults);
     this.reset();
   }
 
@@ -55,9 +59,6 @@ export class DB {
     this.environment.clear();
     for (id in this.rules) {
       this.environment.set(id, this.rules[id]);
-    }
-    for (id in this.items) {
-      this.items[id].bind(this.environment);
     }
     for (id in this.regions) {
       this.regions[id].bind(this.environment);
@@ -81,22 +82,14 @@ export class DB {
    * If rules have been modified, they are not modified back.
    */
   softReset() {
-    let id: string, defaultSet = new Set<string>();
-    for (id of this.defaults) {
-      defaultSet.add(id);
-    }
     for (let id of this.environment.keys()) {
       if (!this.environment.isBoundToRule(id))
-        this.environment.set(id, defaultSet.has(id));
+        this.environment.set(id, this.defaults.has(id));
     }
   }
-}
 
-/**
- * Create a new database using the given logic.
- */
-export default function createDatabase(logic?: string): DB {
-  return new DB(makeDB(logic));
+  /**
+   * Map of logic IDs (that can be sent to #create) to display names for them.
+   */
+  static LOGICS = LOGICS;
 }
-
-createDatabase.LOGICS = LOGICS;

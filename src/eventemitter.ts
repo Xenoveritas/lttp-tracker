@@ -1,27 +1,22 @@
 "use strict";
 
-export type EventListener = (...args: any[]) => void;
+export type EventListener<T> = (event: T) => void;
 
 /**
  * Simple class for handling event listeners.
  */
-export default class EventEmitter {
-  private listeners: EventListener[] | null = null;
-  /**
-   * The object that listeners receive as <code>this</code>. Defaults to
-   * <code>this</code> - that's the EventEmitter instance, to be specific.
-   */
-  listenerThis: object;
+export default class EventEmitter<TEvent> {
+  private listeners: EventListener<TEvent>[] | null = null;
 
   /**
    * Fires an event to every listener. (This within the events will be the
    * event emitter itself.)
    */
-  fire(...args: any[]): void {
+  fire(event: TEvent): void {
     if (this.listeners !== null) {
       for (let listener of this.listeners) {
         try {
-          listener.apply(this.listenerThis, arguments);
+          listener.call(this, event);
         } catch (ex) {
           console.log('Listener failed:');
           console.log(ex);
@@ -30,14 +25,14 @@ export default class EventEmitter {
     }
   }
 
-  addListener(listener: EventListener): void {
+  addListener(listener: EventListener<TEvent>): void {
     if (this.listeners === null) {
       this.listeners = [];
     }
     this.listeners.push(listener);
   }
 
-  removeListener(listener: EventListener): void {
+  removeListener(listener: EventListener<TEvent>): void {
     if (this.listeners !== null) {
       for (let i = 0; i < this.listeners.length; i++) {
         if (this.listeners[i] === listener) {

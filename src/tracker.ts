@@ -2,7 +2,7 @@
  * Main module for the tracker UI.
  */
 
-import createDatabase, { DB } from './db';
+import DB from './db';
 import { createItemUI, createEquipmentUI } from './ui/item';
 import DungeonUI from './ui/dungeon';
 import MapUI from './ui/map';
@@ -30,7 +30,7 @@ export default class TrackerUI {
    * Create a new TrackerUI.
    */
   constructor(logic?: string) {
-    this.db = createDatabase(logic);
+    this.db = new DB(logic);
     // TODO: Load defaults from local storage or something.
     // Always generate our container.
     this._container = document.createElement('div');

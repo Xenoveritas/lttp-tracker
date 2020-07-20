@@ -1,38 +1,31 @@
 import EventEmitter from './eventemitter';
 import { Environment } from './rule';
+import DB from './db';
 
 /**
- * An item.
+ * An instance of an item within a tracker.
  */
-export default class Item extends EventEmitter {
-  private _held = false;
-  private _env: Environment = null;
+export default class Item {
   /**
    * Creates a new item. These are generally created via the DB and should not
    * need to be created directly.
    */
-  constructor(readonly id: string, readonly name: string) {
-    super();
+  constructor(public readonly id: string, public readonly name: string) {
   }
 
-  get held() { return this._held; }
-  set held(value) {
-    value = !!value;
-    if (value !== this._held) {
-      let old = this._held;
-      this._held = value;
-      this.fire(this.id, old, value);
-      if (this._env) {
-        this._env.set(this.id, value);
-      }
-    }
+  isHeld(environment: Environment) {
+    return environment.isTrue(this.id);
   }
 
-  bind(environment: Environment) {
-    this._env = environment;
-    environment.set(this.id, this._held);
-    environment.addListener(this.id, () => {
-      this.held = environment.isTrue(this.id);
-    });
+  /**
+   * Toggles whether or not this item is held.
+   * @param environment the environment to toggle the value in
+   */
+  toggleHeld(environment: Environment): void {
+    environment.set(this.id, !environment.get(this.id));
+  }
+
+  setHeld(environment: Environment, value: boolean): void {
+    environment.set(this.id, value);
   }
 }

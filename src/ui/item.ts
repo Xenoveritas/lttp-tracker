@@ -1,5 +1,6 @@
-import { DB } from '../db';
+import DB from '../db';
 import Item from '../item';
+import { Environment } from '../rule';
 
 export type ItemLayoutDefinition = string | string[];
 
@@ -71,18 +72,20 @@ export class ItemUI {
     this._cssClass = 'item item-' + item;
     //this._div.append(this.item.name);
     this._div.addEventListener('click', event => {
-      this.item.held = !(this.item.held);
+      this.item.toggleHeld(this.db.environment);
       this.update();
     }, false);
     this.db.environment.addListener(this.item.id, () => { this.update(); });
     this.update();
   }
+
   get element() {
     return this._div;
   }
+
   update() {
     let css = this._cssClass;
-    if (this.item.held) {
+    if (this.item.isHeld(this.db.environment)) {
       css += ' held';
     }
     this._div.className = css;
@@ -223,11 +226,11 @@ export class EquipmentUI {
       // Mark that we're holding all items through this slot.
       for (i = 0; i <= this._index; i++) {
         if (this._items[i] !== null)
-          this._items[i].held = true;
+          this._items[i].setHeld(db.environment, true);
       }
       // And that we're NOT holding any past it.
       for (; i < this._items.length; i++) {
-        this._items[i].held = false;
+        this._items[i].setHeld(db.environment, false);
       }
       this.update();
     }, false);

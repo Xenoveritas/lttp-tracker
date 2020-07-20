@@ -10,7 +10,7 @@
     "start": "webpack --watch --config webpack.dev.js",
     "build": "webpack --config webpack.prod.js",
     "dev": "webpack --config webpack.dev.js",
-    "builddata": "node lib/lttp-parser.js src/data.cson generated/data.js",
+    "build-data": "node lib/lttp-parser.js src/data.cson generated/data.js",
     "build-tools": "tsc --build tsconfig.tools.json",
     "test": "mocha"
   },

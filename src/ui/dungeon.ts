@@ -1,4 +1,4 @@
-import { DB } from '../db';
+import DB from '../db';
 import Dungeon from '../dungeon';
 import Rule, { Environment } from '../rule';
 import TrackerUI from '../tracker';
