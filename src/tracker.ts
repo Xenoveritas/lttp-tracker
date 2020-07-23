@@ -8,6 +8,7 @@ import DungeonUI from './ui/dungeon';
 import MapUI from './ui/map';
 import RuleUI from './ui/rule';
 import LegendUI from './ui/legend';
+import FooterUI from './ui/footer';
 import { LayoutDefinition, ItemLayout, EquipmentLayout, DungeonsLayout, MapsLayout } from './data.cson';
 
 type TrackerLayout = Record<string, unknown>;
@@ -26,6 +27,7 @@ export default class TrackerUI {
   private _equipmentDiv: HTMLDivElement;
   private _dungeonsDiv: HTMLDivElement;
   private _mapsDiv: HTMLDivElement;
+  private _footerDiv: HTMLDivElement;
   /**
    * Create a new TrackerUI.
    */
@@ -78,6 +80,9 @@ export default class TrackerUI {
           break;
         case 'maps':
           this.createMapsUI(layout.maps);
+          break;
+        case 'footer':
+          this.createFooterUI();
           break;
         default:
           let div = document.createElement('div');
@@ -158,6 +163,9 @@ export default class TrackerUI {
     for (let name of names) {
       debug.append(new RuleUI(this.db, name, rules.get(name)).element);
     }
+  }
+  createFooterUI() {
+    this._container.append(this._footerDiv = new FooterUI(this.db).element);
   }
 
   /**

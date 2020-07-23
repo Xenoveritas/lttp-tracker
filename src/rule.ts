@@ -29,7 +29,7 @@ class Value {
     this.setValue(environment, value);
   }
 
-  get value() {
+  get value(): boolean {
     return this._value;
   }
 
@@ -37,7 +37,7 @@ class Value {
    * Change the value. This is a function and not a setter because it also needs
    * to know the environment doing the change.
    */
-  setValue(environment: Environment, value: RuleValue) {
+  setValue(environment: Environment, value: RuleValue): void {
     if (value instanceof Rule) {
       // This is a special case where the rule is being bound.
       value = this.bindRule(environment, value);
@@ -52,7 +52,7 @@ class Value {
    * Sets the evaluated value - this method sets what gets returned by the
    * value property and deals with firing events, ignoring any rule.
    */
-  _setEvaluatedValue(environment: Environment, value: boolean) {
+  _setEvaluatedValue(environment: Environment, value: boolean): void {
     value = !!value;
     if (this._value !== value) {
       this._value = value;
@@ -86,7 +86,7 @@ class Value {
     return this._rule.evaluate(environment);
   }
 
-  unbindRule(environment: Environment) {
+  unbindRule(environment: Environment): void {
     if (this._rule) {
       for (let name of this._rule.uniqueDependencySet()) {
         environment._get(name).removeDependent(this);
@@ -100,7 +100,7 @@ class Value {
    * bound to a value - they act almost exactly like a listener except are
    * easier to remove when a bound rule changes (see unbindRule).
    */
-  addDependent(value: Value) {
+  addDependent(value: Value): void {
     if (this.dependents === null) {
       this.dependents = [ value ];
     } else {
@@ -111,7 +111,7 @@ class Value {
   /**
    * Removes a Value as a dependent of this.
    */
-  removeDependent(value: Value) {
+  removeDependent(value: Value): void {
     if (this.dependents !== null) {
       // Need to know the index
       for (let i = 0; i < this.dependents.length; i++) {
@@ -126,13 +126,13 @@ class Value {
   /**
    * Receive notification that a dependency changed.
    */
-  dependencyChanged(environment: Environment) {
+  dependencyChanged(environment: Environment): void {
     if (this._rule) {
       this._setEvaluatedValue(environment, this._rule.evaluate(environment));
     }
   }
 
-  addListener(listener: ValueListener) {
+  addListener(listener: ValueListener): void {
     if (this.listeners === null) {
       this.listeners = [ listener ];
     } else {
@@ -140,7 +140,7 @@ class Value {
     }
   }
 
-  removeListener(listener: ValueListener) {
+  removeListener(listener: ValueListener): void {
     if (this.listeners !== null) {
       // Need to know the index
       for (let i = 0; i < this.listeners.length; i++) {
@@ -164,7 +164,7 @@ export class Environment {
   /**
    * Removes all mapped values from the environment.
    */
-  clear() {
+  clear(): void {
     this.env.clear();
   }
 
@@ -184,7 +184,7 @@ export class Environment {
    * Gets the value bound to a given name. This returns undefined if the value
    * is not bound, while #isTrue always returns a boolean.
    */
-  get(name: string) {
+  get(name: string): boolean | undefined {
     let v = this.env.get(name);
     if (v === undefined) {
       return undefined;
@@ -196,7 +196,7 @@ export class Environment {
   /**
    * Gets a Value at the given name, generating it if necessary.
    */
-  _get(name: string) {
+  _get(name: string): Value {
     let v = this.env.get(name);
     if (v === undefined) {
       this.env.set(name, v = new Value(this, name, false));
@@ -207,7 +207,7 @@ export class Environment {
   /**
    * Test if a given name is bound to a rule.
    */
-  isBoundToRule(name: string) {
+  isBoundToRule(name: string): boolean {
     let v = this.env.get(name);
     if (v === undefined) {
       return false;
@@ -220,7 +220,7 @@ export class Environment {
    * Sets a name to a value, which should either be a boolean or a Rule. Any
    * other value type will be cooerced to a boolean.
    */
-  set(name: string, value: RuleValue) {
+  set(name: string, value: RuleValue): void {
     let v = this.env.get(name);
     if (v === undefined) {
       this.env.set(name, new Value(this, name, value));
@@ -234,7 +234,7 @@ export class Environment {
    * given value changes. If a listener is added multiple times, it will be
    * called multiple times.
    */
-  addListener(name: string, listener: ValueListener) {
+  addListener(name: string, listener: ValueListener): void {
     let v = this.env.get(name);
     if (v === undefined) {
       this.env.set(name, v = new Value(this, name, false));
@@ -247,7 +247,7 @@ export class Environment {
    * events. If the listener has been added multiple times, only the first
    * instance will be removed.
    */
-  removeListener(name: string, listener: ValueListener) {
+  removeListener(name: string, listener: ValueListener): void {
     let v = this.env.get(name);
     if (v !== undefined) {
       v.removeListener(listener);
@@ -257,7 +257,7 @@ export class Environment {
   /**
    * Gets an iterator over all keys with set values.
    */
-  keys() {
+  keys(): IterableIterator<string> {
     return this.env.keys();
   }
 
@@ -265,8 +265,8 @@ export class Environment {
    * This is mostly a debug function - it gets a map of all rules that exist to
    * the rules that define them.
    */
-  _getBoundRules() {
-    let result = new Map();
+  _getBoundRules(): Map<string, Rule> {
+    let result = new Map<string, Rule>();
     this.env.forEach((value, name) => {
       if (value._rule) {
         result.set(name, value._rule);
@@ -346,7 +346,7 @@ export default class Rule {
   /**
    * Evaluate this rule within an environment.
    */
-  evaluate(env: Environment) {
+  evaluate(env: Environment): boolean {
     if (this._fast !== null) {
       if (typeof this._fast === 'string') {
         return env.isTrue(this._fast);
@@ -370,7 +370,7 @@ export default class Rule {
   /**
    * Determine whether or not this rule depends on a given value.
    */
-  dependsOn(name: string) {
+  dependsOn(name: string): boolean {
     if (typeof this._fast === 'boolean') {
       return false;
     } else if (typeof this._fast === 'string') {
@@ -379,7 +379,7 @@ export default class Rule {
     return this._dependsOn(name);
   }
 
-  private _dependsOn(name: string) {
+  private _dependsOn(name: string): boolean {
     if (this._any !== null) {
       if (this._any.some(n => {
           if (typeof n === 'string') {
@@ -424,7 +424,7 @@ export default class Rule {
    * Internal method to find unique dependencies of this rule.
    * @param names set being built
    */
-  private _uniqueDependencies(names: Set<string>) {
+  private _uniqueDependencies(names: Set<string>): void {
     if (this._any !== null) {
       this._any.forEach(name => {
         if (typeof name === 'string') {
@@ -448,7 +448,7 @@ export default class Rule {
   /**
    * Gets a list of unique names within this rule. The order is undefined.
    */
-  uniqueDependencies() {
+  uniqueDependencies(): string[] {
     if (typeof this._fast === 'boolean') {
       return [];
     } else if (typeof this._fast === 'string') {
@@ -460,7 +460,7 @@ export default class Rule {
   /**
    * Creates a string representation of the Rule.
    */
-  toString() {
+  toString(): string {
     if (this._fast !== null) {
       return `[Rule ${this._fast.toString()}]`;
     } else {

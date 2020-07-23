@@ -6,6 +6,11 @@ import Region from './region';
 import Location from './location';
 import Dungeon from './dungeon';
 
+interface VersionInfo {
+  date: string;
+  alttpr: string;
+}
+
 /**
  * The DB contains information about the various items, dungeons, locations,
  * and other information stored within the game. It maintains an Environment
@@ -23,6 +28,7 @@ export default class DB {
   prizes: Record<string, string[]>;
   layout: LayoutDefinition;
   defaults: Set<string>;
+  version: VersionInfo;
 
   /**
    * Create a new DB using either the given logic ID or the tracker database
@@ -47,6 +53,7 @@ export default class DB {
     this.prizes = db.prizes;
     this.layout = db.layout;
     this.defaults = new Set<string>(db.defaults);
+    this.version = db.version;
     this.reset();
   }
 

@@ -1,6 +1,4 @@
-import EventEmitter from './eventemitter';
 import { Environment } from './rule';
-import DB from './db';
 
 /**
  * An instance of an item within a tracker.

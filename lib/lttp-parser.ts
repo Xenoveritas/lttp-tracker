@@ -287,7 +287,8 @@ export function createDefaultDatabase() {
     slots: ${JSON.stringify(data['slots'])},
     prizes: ${JSON.stringify(data['prizes'])},
     layout: ${JSON.stringify(data['layout'])},
-    defaults: ${JSON.stringify(defaults)}
+    defaults: ${JSON.stringify(defaults)},
+    version: ${JSON.stringify(data['version'])}
   };
 }
 

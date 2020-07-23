@@ -117,6 +117,11 @@ export interface LogicConfig {
   slots: Record<string, SlotConfig>;
 }
 
+export interface VersionInfo {
+  date: string;
+  alttpr: string;
+}
+
 export default interface Config {
   items: Record<string, ItemConfig>;
   rules: Record<string, RuleConfig>;
@@ -128,4 +133,5 @@ export default interface Config {
   layout: LayoutConfig;
   defaults: string[];
   logics: Record<string, LogicConfig>;
+  version: VersionInfo;
 }

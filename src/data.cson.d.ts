@@ -26,6 +26,10 @@ export interface TrackerDataBase {
   prizes: Record<string, string[]>;
   layout: LayoutDefinition;
   defaults: string[];
+  version: {
+    date: string;
+    alttpr: string;
+  };
 }
 
 export function createDefaultDatabase(): TrackerDataBase;

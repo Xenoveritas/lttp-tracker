@@ -1121,6 +1121,7 @@ layout:
       "ganons_tower"
     ]
   maps: [ "light-world", "dark-world" ]
+  footer: { }
 defaults: [
   "bombs"
 ]
@@ -1168,3 +1169,7 @@ logics:
     slots:
       # Bow picks up wooden arrows in its slot
       bow_and_arrows: [ 'bow', 'wooden_arrows', 'silver_arrows' ]
+
+version:
+  date: '2018-03-07'
+  alttpr: 'v29'
