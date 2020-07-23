@@ -81,6 +81,28 @@ export default class Location {
   }
 
   /**
+   * Gets the number of available items. For normal locations, this is either
+   * 0 or `items`. For merge locations, it may be different based on the
+   * child locations.
+   * @param environment the environment to check
+   */
+  getAvailableItems(environment: Environment): number {
+    return this._required.evaluate(environment) ? this.items : 0;
+  }
+
+  /**
+   * Gets the number of items that are visible, but inaccessible. For most
+   * locations, this will be 0.
+   * @param environment the environment to check
+   */
+  getVisibleItems(environment: Environment): number {
+    // Fail-fast: almost all items are never visible as they are located within a chest
+    if (this._visible === Rule.FALSE)
+      return 0;
+    return this._required.evaluate(environment) ? 0 : (this._visible.evaluate(environment) ? this.items : 0);
+  }
+
+  /**
    * Gets the state of this location, as one of:
    * Location.UNAVAILABLE - item is both unavailable and not visible
    * Location.VISIBLE - item cannot be retrieved but it is possible to see
@@ -134,7 +156,15 @@ export default class Location {
 export class MergeLocation extends Location {
   private _subLocations: Location[];
   constructor(id: string, name: string, x: number, y: number, locations: Location[]) {
-    super(id, name, false, false, x, y, 0);
+    super(id,
+      name,
+      locations.map(location => location.id),
+      locations.map(location => location.id + '.visible'),
+      x, y,
+      locations.reduce<number>((itemCount: number, location: Location) => {
+        return itemCount + location.items;
+      }, 0)
+    );
     this._subLocations = locations;
   }
 
@@ -153,6 +183,29 @@ export class MergeLocation extends Location {
   }
 
   /**
+   * Gets the number of available items. For normal locations, this is either
+   * 0 or `items`. For merge locations, it may be different based on the
+   * child locations.
+   * @param environment the environment to check
+   */
+  getAvailableItems(environment: Environment): number {
+    return this._subLocations.reduce<number>((itemCount: number, location: Location) => {
+      return itemCount + location.getAvailableItems(environment);
+    }, 0);
+  }
+
+  /**
+   * Gets the number of items that are visible, but inaccessible. For merge
+   * locations, this is the sum of all sublocations' visible items.
+   * @param environment the environment to check
+   */
+  getVisibleItems(environment: Environment): number {
+    return this._subLocations.reduce<number>((itemCount: number, location: Location) => {
+      return itemCount + location.getVisibleItems(environment);
+    }, 0);
+  }
+
+  /**
    * Gets the state of this location, as one of:
    * Location.UNAVAILABLE - item is both unavailable and not visible
    * Location.VISIBLE - item cannot be retrieved but it is possible to see
@@ -161,22 +214,30 @@ export class MergeLocation extends Location {
    * Location.PARTIALLY_AVAILABLE - some items are available, but not all
    */
   getState(environment: Environment): LocationState {
-    let partial = false, available = true, visible = true;
-    for (const location of this._subLocations) {
-      if (location.isAvailable(environment)) {
-        partial = true;
-      } else {
-        available = false;
-      }
-      if (!location.isVisible(environment)) {
-        visible = false;
-      }
+    const available = this.getAvailableItems(environment);
+    if (available === this.items) {
+      return Location.AVAILABLE;
+    } else if (available > 0) {
+      return Location.PARTIALLY_AVAILABLE;
+    } else if (this._subLocations.some(location => location.isVisible(environment))) {
+      return Location.VISIBLE;
+    } else {
+      return Location.UNAVAILABLE;
     }
-    return available ? Location.AVAILABLE
-      : (partial ? Location.PARTIALLY_AVAILABLE : (visible ? Location.VISIBLE : Location.UNAVAILABLE));
   }
 
   bind(environment: Environment): void {
     super.bind(environment);
+  }
+
+  /**
+   * This binds a listener that indicates when the location's state changes
+   * within a given environment. It is strictly a pass-through listener - it
+   * binds to the underlying environment.
+   * @param environment the environment to bind to
+   * @param listener a listener that will fire whenever the state in that environment changes
+   */
+  addStateListener(environment: Environment, listener: LocationListener): void {
+    this._subLocations.forEach(location => location.addStateListener(environment, listener));
   }
 }

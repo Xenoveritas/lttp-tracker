@@ -53,8 +53,10 @@ class BasicPin extends Pin {
 }
 
 class ItemPin extends BasicPin {
+  protected db: DB;
   constructor(public location: Location, x: number, y: number, db: DB) {
     super(location, x, y, db);
+    this.db = db;
     this.className = 'pin pin-' + location.id + ' ';
     this.pin.addEventListener('click', () => {
       this.location.cleared = !this.location.cleared;
@@ -73,6 +75,30 @@ class ItemPin extends BasicPin {
     } else {
       state = this.location.getState(this.db.environment);
     }
+    const available = this.location.getAvailableItems(this.db.environment);
+    const visible = this.location.getVisibleItems(this.db.environment);
+    let title = this.location.name + ' (';
+    if (available === 0) {
+      if (visible > 0) {
+        title += `${visible} item${visible !== 1 ? 's' : ''} visible`;
+      }
+      if (visible < this.location.items) {
+        const inaccessible = this.location.items - available;
+        title += `${inaccessible} item${inaccessible !== 1 ? 's' : ''} inaccessible`;
+      }
+    } else {
+      title += available + ' item';
+      if (available > 1)
+        title += 's';
+      title += ' available';
+      if (visible > 0) {
+        title + ', ' + visible + ' visible';
+      }
+      const inaccessible = this.location.items - available;
+      if (inaccessible > 0)
+        title += `${inaccessible} item${inaccessible !== 1 ? 's' : ''} inaccessible`;
+    }
+    this.pin.title = title + ')';
     this.pin.className = this.className + state;
   }
 }
@@ -100,18 +126,14 @@ class DungeonPin extends Pin {
    * Updates the UI state to match the model.
    */
   update(): void {
-    let state;
-    if (this.dungeon.isEnterable(this.db.environment)) {
-      state = "open";
-    } else {
-      state = "closed";
-    }
+    const accessible = this.dungeon.isEnterable(this.db.environment);
+    this.pin.title = this.dungeon.name + (accessible ? ' (open)' : ' (inaccessible)');
     const available = this.dungeon.getAccessibleItemCount(this.db.environment);
     this.itemPinDiv.innerHTML = available + "/" + this.dungeon.totalItemCount;
     this.itemPinDiv.className = 'items ' + (available === 0 ? 'items-none' :
       (available < this.dungeon.totalItemCount ? 'items-partial' : 'items-all'));
     this.bossPinDiv.className = 'boss ' + (this.dungeon.isBossDefeatable(this.db.environment) ? 'boss-defeatable' : 'boss-unavailable');
-    this.pin.className = this.className + state;
+    this.pin.className = this.className + (accessible ? 'open' : 'closed');
   }
 }
 

@@ -31,6 +31,11 @@ export default class DungeonUI {
     const d = document.createElement('div');
     d.className = 'name';
     d.append(this.dungeon.name);
+    if (this.dungeon.boss) {
+      this._div.title = `${this.dungeon.boss.name} (${this.dungeon.name})`;
+    } else {
+      this._div.title = this.dungeon.name;
+    }
     this._div.append(d);
     // Mirror the dungeon chest counts
     if (this.dungeon.hasPrize) {

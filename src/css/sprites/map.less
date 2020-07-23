@@ -28,16 +28,22 @@
     .sprite-position(@map-pin-superbomb);
   }
   &.dungeon {
-    // FIXME: Not included yet
+    .sprite-position(@map-pin-dungeon-open);
+    &.closed {
+      .sprite-position(@map-pin-dungeon-closed);
+    }
     & .items {
       // For now, just make this be a label-like thing.
       position: relative;
-      top: -5pt;
-      left: -16px;
+      top: 32px;
+      left: -6px;
       background-color: #F00;
       color: #FFF;
       font-weight: bold;
       border-radius: 16px;
+      display: inline-block;
+      padding: 0 8px;
+      box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
       &.items-partial {
         background-color: #FF0;
         color: #000;

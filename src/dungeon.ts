@@ -123,6 +123,13 @@ export default class Dungeon {
   }
 
   /**
+   * Gets the boss of this dungeon.
+   */
+  get boss(): Boss {
+    return this._boss;
+  }
+
+  /**
    * Whether or not defeating the boss awards a prize.
    */
   get hasPrize(): boolean {
