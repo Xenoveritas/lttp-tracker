@@ -58,6 +58,14 @@ export default class DB {
   }
 
   /**
+   * Checks if a given ID is an item ID.
+   * @param id the ID to check if it is an item
+   */
+  isItem(id: string): boolean {
+    return id in this.items;
+  }
+
+  /**
    * Resets the database. This completely resets the environment back to its
    * original state (which also removes all bound listeners).
    */

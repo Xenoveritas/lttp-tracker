@@ -1,6 +1,7 @@
 "use strict";
 
 import Rule, { Environment, RuleDefinition } from './rule';
+import { BasicLocation } from './location';
 
 /**
  * A Boss within a dungeon. Bosses have a name and a rule for getting to them
@@ -82,7 +83,7 @@ export type DungeonListener = (dungeon: Dungeon) => void;
 /**
  * Describes a dungeon.
  */
-export default class Dungeon {
+export default class Dungeon implements BasicLocation {
   private _enter: Rule;
   private _boss: Boss;
   private _items: ItemLocation[];
@@ -184,6 +185,16 @@ export default class Dungeon {
     return this._items.reduce((current, item) => {
       return item.isAccessible(environment) ? current + 1 : current;
     }, 0);
+  }
+
+  /**
+   * At present, this always returns 0: item locations are never considered
+   * visible but unavailable. There are a few bonk locations where this is
+   * wrong: you can see what you can bonk off, but you can't get it yet. When
+   * that's properly implemented, this will return something meaningful.
+   */
+  getVisibleItemCount(_environment: Environment): number {
+    return 0;
   }
 
   /**

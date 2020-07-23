@@ -1,13 +1,19 @@
 import Location from '../location';
 import Dungeon from '../dungeon';
 import DB from '../db';
+import PinTooltip from './pin-tooltip';
+import * as Popper from '@popperjs/core';
 
 /**
  * Generic pin class for placing something on the map. Takes an x, y coordinate
  * and generates a <div> that can be placed there. And that's it.
  */
-class Pin {
+abstract class Pin {
   protected pin: HTMLDivElement;
+  protected tooltip: HTMLDivElement;
+  protected popper: Popper.Instance | null = null;
+  private _tooltipCreated = false;
+
   constructor(x: number, y: number) {
     // Position the pin using CSS percents to allow the map to be resized.
     x = (x / 512) * 100;
@@ -18,7 +24,25 @@ class Pin {
     this.pin = document.createElement('div');
     this.pin.className = 'pin';
     this.pin.setAttribute('style', 'position: absolute; left: ' + x + '%; top: ' + y + '%;');
+    this.tooltip = document.createElement('div');
+    this.tooltip.className = 'pin-tooltip';
+    this.tooltip.setAttribute('role', 'tooltip');
+    const showEvents = ['mouseenter', 'focus'];
+    const hideEvents = ['mouseleave', 'blur'];
+    const show = () => { this.showTooltip(); };
+    const hide = () => { this.hideTooltip(); };
+    showEvents.forEach((event): void => {
+      this.pin.addEventListener(event, show);
+    });
+    hideEvents.forEach((event): void => {
+      this.pin.addEventListener(event, hide);
+    });
   }
+
+  /**
+   * Required method to fill out the tooltip. It will already exist as a div.
+   */
+  abstract createTooltip(): void;
 
   /**
    * The HTML element representing this location.
@@ -26,18 +50,58 @@ class Pin {
   get element(): HTMLDivElement {
     return this.pin;
   }
+
+  get tooltipElement(): HTMLDivElement {
+    return this.tooltip;
+  }
+
+  /**
+   * Create the popper instance. Use this to override any settings.
+   */
+  protected createPopper(): Popper.Instance {
+    return Popper.createPopper(this.pin, this.tooltip);
+  }
+
+  /**
+   * Show the tooltip about this pin.
+   */
+  showTooltip(): void {
+    // Create the tooltip (technically the tooltip contents) only when necessary
+    if (!this._tooltipCreated) {
+      this.createTooltip();
+      this._tooltipCreated = true;
+    }
+    this.tooltip.setAttribute('data-show', 'true');
+    if (this.popper === null) {
+      this.popper = this.createPopper();
+    }
+  }
+  /**
+   * Hide the tooltip about this pin.
+   */
+  hideTooltip(): void {
+    this.tooltip.removeAttribute('data-show');
+    if (this.popper !== null) {
+      this.popper.destroy();
+      this.popper = null;
+    }
+  }
 }
 
 class BasicPin extends Pin {
   className: string;
+  pinTooltip?: PinTooltip;
   constructor(public location: Location, x: number, y: number, protected db: DB) {
     super(x, y);
     this.className = 'pin pin-' + location.type;
-    this.pin.setAttribute('title', location.name);
     this.location.addStateListener(db.environment, () => {
       this.update();
     });
     this.update();
+  }
+
+  createTooltip() {
+    this.pinTooltip = new PinTooltip(this.location, this.db, this.tooltip);
   }
 
   /**
@@ -49,6 +113,8 @@ class BasicPin extends Pin {
       style += ' available';
     }
     this.pin.className = style;
+    if (this.pinTooltip)
+      this.pinTooltip.update();
   }
 }
 
@@ -75,35 +141,9 @@ class ItemPin extends BasicPin {
     } else {
       state = this.location.getState(this.db.environment);
     }
-    const available = this.location.getAvailableItems(this.db.environment);
-    const visible = this.location.getVisibleItems(this.db.environment);
-    let title = this.location.name + ' (';
-    if (available === 0) {
-      if (visible > 0) {
-        title += `${visible} item${visible !== 1 ? 's' : ''} visible`;
-      }
-      if (visible < this.location.items) {
-        const inaccessible = this.location.items - available;
-        if (visible > 0) {
-          title += ', ';
-        }
-        title += `${inaccessible} inaccessible item${inaccessible !== 1 ? 's' : ''}`;
-      }
-    } else {
-      title += available + ' item';
-      if (available > 1)
-        title += 's';
-      title += ' available';
-      if (visible > 0) {
-        title += `, ${visible} visible item${visible !== 1 ? 's' : ''}`;
-      }
-      // The visible item count only counts items that are visible but inaccessible
-      const inaccessible = this.location.items - available - visible;
-      if (inaccessible > 0)
-        title += `, ${inaccessible} inaccessible item${inaccessible !== 1 ? 's' : ''}`;
-    }
-    this.pin.title = title + ')';
     this.pin.className = this.className + state;
+    if (this.pinTooltip)
+      this.pinTooltip.update();
   }
 }
 
@@ -114,10 +154,11 @@ class DungeonPin extends Pin {
   className: string;
   itemPinDiv: HTMLDivElement;
   bossPinDiv: HTMLDivElement;
+  pinTooltip?: PinTooltip;
+
   constructor(public dungeon: Dungeon, x: number, y: number, private db: DB) {
     super(x, y);
     this.className = 'pin dungeon dungeon-' + dungeon.id + ' ';
-    this.pin.setAttribute('title', dungeon.name);
     this.pin.append(this.itemPinDiv = document.createElement('div'));
     this.itemPinDiv.className = 'items';
     this.pin.append(this.bossPinDiv = document.createElement('div'));
@@ -126,18 +167,23 @@ class DungeonPin extends Pin {
     this.update();
   }
 
+  createTooltip() {
+    this.pinTooltip = new PinTooltip(this.dungeon, this.db, this.tooltip);
+  }
+
   /**
    * Updates the UI state to match the model.
    */
   update(): void {
     const accessible = this.dungeon.isEnterable(this.db.environment);
-    this.pin.title = this.dungeon.name + (accessible ? ' (open)' : ' (inaccessible)');
     const available = this.dungeon.getAccessibleItemCount(this.db.environment);
     this.itemPinDiv.innerHTML = available + "/" + this.dungeon.totalItemCount;
     this.itemPinDiv.className = 'items ' + (available === 0 ? 'items-none' :
       (available < this.dungeon.totalItemCount ? 'items-partial' : 'items-all'));
     this.bossPinDiv.className = 'boss ' + (this.dungeon.isBossDefeatable(this.db.environment) ? 'boss-defeatable' : 'boss-unavailable');
     this.pin.className = this.className + (accessible ? 'open' : 'closed');
+    if (this.pinTooltip)
+      this.pinTooltip.update();
   }
 }
 
@@ -164,11 +210,12 @@ export default class MapUI {
       const location = db.locations[id];
       if (location.x !== null && location.y !== null) {
         if (location.x >= min && location.x < max) {
-          if (location.type === 'item') {
-            this._div.append(new ItemPin(location, location.x - min, location.y, db).element);
-          } else {
-            this._div.append(new BasicPin(location, location.x - min, location.y, db).element);
-          }
+          const pin: Pin =
+            location.type === 'item' ?
+              new ItemPin(location, location.x - min, location.y, db) :
+              new BasicPin(location, location.x - min, location.y, db);
+          this._div.append(pin.element);
+          this._div.append(pin.tooltipElement);
         }
       }
     }
@@ -177,7 +224,9 @@ export default class MapUI {
       const dungeon = db.dungeons[id];
       if (dungeon.x !== null && dungeon.y !== null) {
         if (dungeon.x >= min && dungeon.x < max) {
-          this._div.append(new DungeonPin(dungeon, dungeon.x - min, dungeon.y, db).element);
+          const pin = new DungeonPin(dungeon, dungeon.x - min, dungeon.y, db);
+          this._div.append(pin.element);
+          this._div.append(pin.tooltipElement);
         }
       }
     }

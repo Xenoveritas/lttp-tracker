@@ -29,4 +29,18 @@
       }
     }
   }
+  .pin-tooltip {
+    background-color: #4A4A4A;
+    color: #DDD;
+    display: none;
+    z-index: 100;
+    padding: 4px;
+    border: solid 1px #222;
+    &[data-show] {
+      display: block;
+    }
+    .title {
+      font-weight: bold;
+    }
+  }
 }

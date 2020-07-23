@@ -9,13 +9,27 @@ export type LocationState = 'unavailable' | 'visible' | 'available' | 'partial';
 export type LocationListener = (location: Location) => void;
 
 /**
+ * Defines what's necessary for a basic location, which can be either a world
+ * location or a dungeon.
+ */
+export interface BasicLocation {
+  name: string;
+  readonly totalItemCount: number;
+  getAccessibleItemCount(environment: Environment): number;
+  getVisibleItemCount(environment: Environment): number;
+}
+
+/**
  * Describes a location.
  */
-export default class Location {
+export default class Location implements BasicLocation {
   private _required: Rule;
   private _visible: Rule;
   x: number;
   y: number;
+  /**
+   * The number of items at this location.
+   */
   items: number;
   type: string;
   cleared = false;
@@ -62,8 +76,23 @@ export default class Location {
     this.type = type;
   }
 
+  get availableRule(): Rule {
+    return this._required;
+  }
+
+  get visibleRule(): Rule {
+    return this._visible;
+  }
+
   get visibleRuleId(): string {
     return this.id + '.visible';
+  }
+
+  /**
+   * Alias to the item count.
+   */
+  get totalItemCount(): number {
+    return this.items;
   }
 
   /**
@@ -86,7 +115,7 @@ export default class Location {
    * child locations.
    * @param environment the environment to check
    */
-  getAvailableItems(environment: Environment): number {
+  getAccessibleItemCount(environment: Environment): number {
     return this._required.evaluate(environment) ? this.items : 0;
   }
 
@@ -95,7 +124,7 @@ export default class Location {
    * locations, this will be 0.
    * @param environment the environment to check
    */
-  getVisibleItems(environment: Environment): number {
+  getVisibleItemCount(environment: Environment): number {
     // Fail-fast: almost all items are never visible as they are located within a chest
     if (this._visible === Rule.FALSE)
       return 0;
@@ -189,9 +218,9 @@ export class MergeLocation extends Location {
    * child locations.
    * @param environment the environment to check
    */
-  getAvailableItems(environment: Environment): number {
+  getAccessibleItemCount(environment: Environment): number {
     return this._subLocations.reduce<number>((itemCount: number, location: Location) => {
-      return itemCount + location.getAvailableItems(environment);
+      return itemCount + location.getAccessibleItemCount(environment);
     }, 0);
   }
 
@@ -200,9 +229,9 @@ export class MergeLocation extends Location {
    * locations, this is the sum of all sublocations' visible items.
    * @param environment the environment to check
    */
-  getVisibleItems(environment: Environment): number {
+  getVisibleItemCount(environment: Environment): number {
     return this._subLocations.reduce<number>((itemCount: number, location: Location) => {
-      return itemCount + location.getVisibleItems(environment);
+      return itemCount + location.getVisibleItemCount(environment);
     }, 0);
   }
 
@@ -215,7 +244,7 @@ export class MergeLocation extends Location {
    * Location.PARTIALLY_AVAILABLE - some items are available, but not all
    */
   getState(environment: Environment): LocationState {
-    const available = this.getAvailableItems(environment);
+    const available = this.getAccessibleItemCount(environment);
     if (available === this.items) {
       return Location.AVAILABLE;
     } else if (available > 0) {

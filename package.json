@@ -7,13 +7,14 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "webpack --watch --config webpack.dev.js",
-    "build": "webpack --config webpack.prod.js",
+    "start": "yarn build:tools && webpack --watch --config webpack.dev.js",
+    "build": "yarn build:tools && yarn build:pro",
     "dev": "webpack --config webpack.dev.js",
-    "build-data": "node lib/lttp-parser.js src/data.cson generated/data.js",
-    "build-tools": "tsc --build tsconfig.tools.json",
+    "build:data": "node lib/lttp-parser.js src/data.cson generated/data.js",
+    "build:tools": "tsc --build tsconfig.tools.json",
+    "build:prod": "webpack --config webpack.prod.js",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "test": "mocha"
+    "test": "yarn build:tools && mocha"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^3.7.0",
@@ -36,5 +37,8 @@
     "webpack-cli": "^3.1.2",
     "webpack-merge": "^4.1.2",
     "webpack-spritesmith": "^1.1.0"
+  },
+  "dependencies": {
+    "@popperjs/core": "^2.4.4"
   }
 }
