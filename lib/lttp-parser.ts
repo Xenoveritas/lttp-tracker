@@ -1,5 +1,5 @@
-const CSON = require('cson-parser');
-const fs = require('fs');
+import * as CSON from 'cson-parser';
+import * as fs from 'fs';
 import Rule, { RuleDefinition } from '../src/rule';
 import Config, { BaseLocationConfig, Point, LocationConfig } from './lttp-config';
 
@@ -50,9 +50,9 @@ import Dungeon from './dungeon';
 export function createDefaultDatabase() {
   let rules = {
 `);
-  let rules = data.rules;
-  for (let id in rules) {
-    let rule = rules[id];
+  const rules = data.rules;
+  for (const id in rules) {
+    const rule = rules[id];
     if ('requires' in rule) {
       // Make sure the rule works.
       Rule.parse(rule.requires);
@@ -65,9 +65,10 @@ export function createDefaultDatabase() {
   };
   let regions = [
 `);
-  let regions = data['regions'];
-  for (let id in regions) {
-    let region = regions[id], requires: RuleDefinition = true;
+  const regions = data['regions'];
+  for (const id in regions) {
+    const region = regions[id];
+    let requires: RuleDefinition = true;
     let name = region.name;
     if (!name)
       name = 'Unknown';
@@ -79,18 +80,18 @@ export function createDefaultDatabase() {
     output.write(`    new Region(${JSON.stringify(id)}, ${JSON.stringify(name)}, ${JSON.stringify(requires)}),\n`);
   }
   output.write('\n  ];\n  let items = [\n');
-  let items = data.items;
-  for (let id in items) {
-    let item = items[id];
+  const items = data.items;
+  for (const id in items) {
+    const item = items[id];
     let name = item.name;
     if (!name)
       name = 'Unknown';
     output.write(`    new Item(${JSON.stringify(id)}, ${JSON.stringify(name)}),\n`);
   }
   output.write(`\n  ];\n  let locations = {\n`);
-  let locations = data['locations'], mergeLocations: Record<string, LocationConfig> = {};
-  for (let id in locations) {
-    let location = locations[id];
+  const locations = data['locations'], mergeLocations: Record<string, LocationConfig> = {};
+  for (const id in locations) {
+    const location = locations[id];
     if ('merge' in location) {
       // This is a "merge location" and not a "real" location. Can't be dumped
       // yet but will instead be generated later.
@@ -129,22 +130,22 @@ export function createDefaultDatabase() {
     }
   }
   output.write('\n  };');
-  for (let id in mergeLocations) {
-    let location = mergeLocations[id];
+  for (const id in mergeLocations) {
+    const location = mergeLocations[id];
     let name = location['name'];
     if (!name)
       name = 'Unknown';
     output.write(`\n  locations[${JSON.stringify(id)}] = Location.merge(${JSON.stringify(id)}, ${JSON.stringify(name)}, ${getCoords(location)}, [`);
-    for (let subLocation of location['merge']) {
+    for (const subLocation of location['merge']) {
       output.write(`locations[${JSON.stringify(subLocation)}],\n`);
     }
     output.write(']);');
   }
   output.write(`\n  let dungeons = [\n`);
-  let dungeons = data['dungeons'];
+  const dungeons = data['dungeons'];
   for (let id in dungeons) {
-    let dungeon = dungeons[id], keys = 0;
-    let name = dungeon['name'];
+    const dungeon = dungeons[id];
+    let keys = 0, name = dungeon['name'];
     if (!name)
       name = 'Unknown';
     // By default dungeons can be entered, although this only applies to one.
@@ -159,7 +160,7 @@ export function createDefaultDatabase() {
     // Pre-stringify a bunch of stuff that'll be inserted into JS code:
     id = JSON.stringify(id);
     name = JSON.stringify(name);
-    let enterJson = JSON.stringify(enter);
+    const enterJson = JSON.stringify(enter);
     output.write(`    new Dungeon(${id}, ${name}, ${enterJson}, `);
     // Boss definition
     if ('boss' in dungeon) {
@@ -201,7 +202,7 @@ export function createDefaultDatabase() {
     }
     // Items definition
     if ('items' in dungeon) {
-      let items = dungeon['items'], subcomma = false;
+      const items = dungeon['items'];
       output.write('[');
       items.forEach(item => {
         let name = 'Some Chest', type = 'chest', access: RuleDefinition = true;
@@ -229,15 +230,10 @@ export function createDefaultDatabase() {
         } else {
           throw new Error("Invalid item definition " + JSON.stringify(item));
         }
-        if (subcomma) {
-          output.write(',');
-        } else {
-          subcomma = true;
-        }
         name = JSON.stringify(name);
         access = JSON.stringify(access);
         type = JSON.stringify(type);
-        output.write(`\n      new Dungeon.ItemLocation(${name}, ${access}, ${type})`);
+        output.write(`\n      new Dungeon.ItemLocation(${name}, ${access}, ${type}),`);
       });
       output.write(']');
     } else {
@@ -254,7 +250,7 @@ export function createDefaultDatabase() {
       if (!Array.isArray(notInPool)) {
         throw new Error("Invalid notInPool value: " + JSON.stringify(notInPool));
       }
-      for (let missing of notInPool) {
+      for (const missing of notInPool) {
         if (typeof missing !== 'string') {
           throw new Error("Invalid notInPool value: " + JSON.stringify(missing));
         }
@@ -265,7 +261,7 @@ export function createDefaultDatabase() {
       output.write(', null');
     }
     if ('medallion' in dungeon) {
-      let medallion = dungeon['medallion'];
+      const medallion = dungeon['medallion'];
       if (typeof medallion !== 'string')
         throw new Error("Invalid medallion value: " + JSON.stringify(medallion));
       output.write(`, ${JSON.stringify(medallion)}`);
@@ -296,11 +292,11 @@ export function createDefaultDatabase() {
   // Now deal with logics.
   output.write('export let LOGICS = {\n');
   let genericLogic = null;
-  for (let id in data.logics) {
+  for (const id in data.logics) {
     if (genericLogic === null) {
       genericLogic = id;
     }
-    let logic = data.logics[id];
+    const logic = data.logics[id];
     let name = id[0].toUpperCase() + id.substring(1);
     if ('name' in logic)
       name = logic.name;
@@ -318,12 +314,12 @@ export default function createDatabase(logic) {
   }
   switch(logic) {
 `);
-  for (let id in data.logics) {
-    let logic = data.logics[id];
+  for (const id in data.logics) {
+    const logic = data.logics[id];
     output.write(`  case ${JSON.stringify(id)}:\n`);
     if (logic.rules) {
-      for (let rID in logic.rules) {
-        let rule = logic.rules[rID];
+      for (const rID in logic.rules) {
+        const rule = logic.rules[rID];
         if (!('requires' in rule))
           throw new Error(`Missing requires in rule override ${rID} in logic ${id}`);
         Rule.parse(rule.requires);
@@ -332,7 +328,7 @@ export default function createDatabase(logic) {
     }
     if (logic.slots) {
       // Slots are basically a pure pass-through.
-      for (let sID in logic.slots) {
+      for (const sID in logic.slots) {
         output.write(`    db.slots[${JSON.stringify(sID)}] = ${JSON.stringify(logic.slots[sID])};\n`);
       }
     }
@@ -368,7 +364,7 @@ exports.parseToString = function(data: string | Config): string {
 
 if (module.parent === null) {
   if (process.argv.length >= 3) {
-    let out = process.stdout;
+    let out: Writable = process.stdout;
     if (process.argv.length >= 4) {
       out = fs.createWriteStream(process.argv[3]);
     }

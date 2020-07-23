@@ -5,7 +5,7 @@
 // Half-ass polyfill append for Edge. (This does NOT properly implement append,
 // and also misses a few other classes that should have it, but it does
 // implement enough of it to make Edge work within this app.)
-if (!Element.prototype.hasOwnProperty('append')) {
+if (!Object.prototype.hasOwnProperty.call(Element, 'append')) {
   Element.prototype.append = function(n) {
     if (n instanceof Node) {
       this.appendChild(n);
@@ -20,7 +20,7 @@ import './css/styles.less';
 import TrackerUI from './tracker';
 
 document.addEventListener('DOMContentLoaded', () => {
-  let tracker = new TrackerUI();
+  const tracker = new TrackerUI();
   tracker.createUI();
   if (location.hash.indexOf('sprites') >= 0) {
     tracker.createSpriteDebugUI();

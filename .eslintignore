@@ -1,0 +1,14 @@
+# Don't lint modules
+node_modules
+
+# Don't lint generated output
+dist
+dist-tools
+generated
+
+# For now, ignore config files...
+.eslintrc.js
+webpack.*.js
+
+# For now, ignore tests...
+test

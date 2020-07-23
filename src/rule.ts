@@ -57,12 +57,12 @@ class Value {
     if (this._value !== value) {
       this._value = value;
       if (this.dependents !== null) {
-        for (let dependent of this.dependents) {
+        for (const dependent of this.dependents) {
           dependent.dependencyChanged(environment);
         }
       }
       if (this.listeners !== null) {
-        for (let listener of this.listeners) {
+        for (const listener of this.listeners) {
           listener(this.name, this._value, environment);
         }
       }
@@ -71,7 +71,7 @@ class Value {
 
   bindRule(environment: Environment, rule: Rule): boolean {
     // Raise on circular dependency BEFORE changing any state
-    let deps = rule.uniqueDependencySet();
+    const deps = rule.uniqueDependencySet();
     if (deps.has(this.name)) {
       throw new Error(`Not making a circular dependency (cannot bind rule referring to "${this.name}" under the name "${this.name}")`);
     }
@@ -80,7 +80,7 @@ class Value {
       this.unbindRule(environment);
     }
     this._rule = rule;
-    for (let name of deps) {
+    for (const name of deps) {
       environment._get(name).addDependent(this);
     }
     return this._rule.evaluate(environment);
@@ -88,7 +88,7 @@ class Value {
 
   unbindRule(environment: Environment): void {
     if (this._rule) {
-      for (let name of this._rule.uniqueDependencySet()) {
+      for (const name of this._rule.uniqueDependencySet()) {
         environment._get(name).removeDependent(this);
       }
     }
@@ -172,7 +172,7 @@ export class Environment {
    * Evaluate a given name and see if it's true.
    */
   isTrue(name: string): boolean {
-    let v = this.env.get(name);
+    const v = this.env.get(name);
     if (v === undefined) {
       return false;
     } else {
@@ -185,7 +185,7 @@ export class Environment {
    * is not bound, while #isTrue always returns a boolean.
    */
   get(name: string): boolean | undefined {
-    let v = this.env.get(name);
+    const v = this.env.get(name);
     if (v === undefined) {
       return undefined;
     } else {
@@ -208,7 +208,7 @@ export class Environment {
    * Test if a given name is bound to a rule.
    */
   isBoundToRule(name: string): boolean {
-    let v = this.env.get(name);
+    const v = this.env.get(name);
     if (v === undefined) {
       return false;
     } else {
@@ -221,7 +221,7 @@ export class Environment {
    * other value type will be cooerced to a boolean.
    */
   set(name: string, value: RuleValue): void {
-    let v = this.env.get(name);
+    const v = this.env.get(name);
     if (v === undefined) {
       this.env.set(name, new Value(this, name, value));
     } else {
@@ -248,7 +248,7 @@ export class Environment {
    * instance will be removed.
    */
   removeListener(name: string, listener: ValueListener): void {
-    let v = this.env.get(name);
+    const v = this.env.get(name);
     if (v !== undefined) {
       v.removeListener(listener);
     }
@@ -266,7 +266,7 @@ export class Environment {
    * the rules that define them.
    */
   _getBoundRules(): Map<string, Rule> {
-    let result = new Map<string, Rule>();
+    const result = new Map<string, Rule>();
     this.env.forEach((value, name) => {
       if (value._rule) {
         result.set(name, value._rule);
@@ -354,7 +354,7 @@ export default class Rule {
         return this._fast;
       }
     }
-    let evalFlag = (flag: string | Rule) => {
+    const evalFlag = (flag: string | Rule) => {
       return (typeof flag === 'string') ? env.isTrue(flag) : flag.evaluate(env);
     };
     if (this._any && (!this._any.some(evalFlag))) {
@@ -409,7 +409,7 @@ export default class Rule {
    * Gets a set of unique names within this rule.
    */
   uniqueDependencySet(): Set<string> {
-    let names = new Set<string>();
+    const names = new Set<string>();
     if (typeof this._fast === 'boolean') {
       return names;
     } else if (typeof this._fast === 'string') {
@@ -507,8 +507,8 @@ function parseDefinitonList(list: RuleDefinition[]): RulePart[] {
     return [ list ];
   } else if (Array.isArray(list)) {
     // Basically a list of either other rules or strings
-    let result: RulePart[] = [];
-    for (let rule of list) {
+    const result: RulePart[] = [];
+    for (const rule of list) {
       if (typeof rule === 'string') {
         // Just add it.
         result.push(rule);

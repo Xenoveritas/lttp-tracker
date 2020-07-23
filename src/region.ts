@@ -1,5 +1,4 @@
 "use strict";
-import EventEmitter from './eventemitter';
 import Rule, { Environment, RuleDefinition } from './rule';
 
 /**

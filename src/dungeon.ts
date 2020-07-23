@@ -22,8 +22,8 @@ export class Boss {
     this._hasPrize = arguments.length >= 4 ? hasPrize : true;
   }
 
-  get name() { return this._name; }
-  get hasPrize() { return this._hasPrize; }
+  get name(): string { return this._name; }
+  get hasPrize(): boolean { return this._hasPrize; }
 
   isAccessible(environment: Environment): boolean {
     if (!environment)
@@ -209,7 +209,7 @@ export default class Dungeon {
     const processEvent = () => {
       // Blank out the next event.
       nextEvent = false;
-      let newEnter = this._enter.evaluate(environment),
+      const newEnter = this._enter.evaluate(environment),
         newDefeatable = this.isBossDefeatable(environment),
         newItemCount = this.getAccessibleItemCount(environment);
       if (oldEnter !== newEnter || oldDefeatable !== newDefeatable || oldItemCount !== newItemCount) {

@@ -35,18 +35,18 @@ export default class DB {
    * information.
    */
   constructor(logic?: string | TrackerDataBase) {
-    let db: TrackerDataBase =
+    const db: TrackerDataBase =
       typeof logic === 'string' || typeof logic === 'undefined' ?
         makeDB(logic) : logic;
     this.rules = db.rules;
-    for (let item of db.items) {
+    for (const item of db.items) {
       this.items[item.id] = item;
     }
-    for (let region of db.regions) {
+    for (const region of db.regions) {
       this.regions[region.id] = region;
     }
     this.locations = db.locations;
-    for (let dungeon of db.dungeons) {
+    for (const dungeon of db.dungeons) {
       this.dungeons[dungeon.id] = dungeon;
     }
     this.slots = db.slots;
@@ -61,7 +61,7 @@ export default class DB {
    * Resets the database. This completely resets the environment back to its
    * original state (which also removes all bound listeners).
    */
-  reset() {
+  reset(): void {
     let id: string;
     this.environment.clear();
     for (id in this.rules) {
@@ -88,8 +88,8 @@ export default class DB {
    *
    * If rules have been modified, they are not modified back.
    */
-  softReset() {
-    for (let id of this.environment.keys()) {
+  softReset(): void {
+    for (const id of this.environment.keys()) {
       if (!this.environment.isBoundToRule(id))
         this.environment.set(id, this.defaults.has(id));
     }

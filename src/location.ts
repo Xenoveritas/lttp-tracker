@@ -52,7 +52,7 @@ export default class Location {
     x: number,
     y: number,
     items: number,
-    type: string = 'item'
+    type = 'item'
   ) {
     this._required = Rule.parse(required);
     this._visible = Rule.parse(visible);
@@ -62,7 +62,7 @@ export default class Location {
     this.type = type;
   }
 
-  get visibleRuleId() {
+  get visibleRuleId(): string {
     return this.id + '.visible';
   }
 
@@ -98,7 +98,7 @@ export default class Location {
    * field with the same name as the id reflects the state of the "required"
    * rule, and the name of id + ".visible" reflects the visible status.
    */
-  bind(environment: Environment) {
+  bind(environment: Environment): void {
     environment.set(this.id, this._required);
     environment.set(this.visibleRuleId, this._visible);
   }
@@ -110,7 +110,7 @@ export default class Location {
    * @param environment the environment to bind to
    * @param listener a listener that will fire whenever the state in that environment changes
    */
-  addStateListener(environment: Environment, listener: LocationListener) {
+  addStateListener(environment: Environment, listener: LocationListener): void {
     const l = () => {
       listener(this);
     };
@@ -141,14 +141,14 @@ export class MergeLocation extends Location {
   /**
    * Determines if this location has items that are available.
    */
-  isAvailable(environment: Environment) {
+  isAvailable(environment: Environment): boolean {
     return this._subLocations.every(location => location.isAvailable(environment));
   }
 
   /**
    * Determines if this location has items that are visible.
    */
-  isVisible(environment: Environment) {
+  isVisible(environment: Environment): boolean {
     return this._subLocations.every(location => location.isVisible(environment));
   }
 
@@ -162,7 +162,7 @@ export class MergeLocation extends Location {
    */
   getState(environment: Environment): LocationState {
     let partial = false, available = true, visible = true;
-    for (let location of this._subLocations) {
+    for (const location of this._subLocations) {
       if (location.isAvailable(environment)) {
         partial = true;
       } else {

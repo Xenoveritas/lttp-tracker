@@ -23,7 +23,7 @@ class Pin {
   /**
    * The HTML element representing this location.
    */
-  get element() {
+  get element(): HTMLDivElement {
     return this.pin;
   }
 }
@@ -43,7 +43,7 @@ class BasicPin extends Pin {
   /**
    * Updates the UI state to match the model.
    */
-  update() {
+  update(): void {
     let style = this.className;
     if (this.location.isAvailable(this.db.environment)) {
       style += ' available';
@@ -99,14 +99,14 @@ class DungeonPin extends Pin {
   /**
    * Updates the UI state to match the model.
    */
-  update() {
+  update(): void {
     let state;
     if (this.dungeon.isEnterable(this.db.environment)) {
       state = "open";
     } else {
       state = "closed";
     }
-    let available = this.dungeon.getAccessibleItemCount(this.db.environment);
+    const available = this.dungeon.getAccessibleItemCount(this.db.environment);
     this.itemPinDiv.innerHTML = available + "/" + this.dungeon.totalItemCount;
     this.itemPinDiv.className = 'items ' + (available === 0 ? 'items-none' :
       (available < this.dungeon.totalItemCount ? 'items-partial' : 'items-all'));
@@ -134,8 +134,8 @@ export default class MapUI {
       max = 1024;
     }
     // Grab all locations in the DB that should be on this map.
-    for (let id in db.locations) {
-      let location = db.locations[id];
+    for (const id in db.locations) {
+      const location = db.locations[id];
       if (location.x !== null && location.y !== null) {
         if (location.x >= min && location.x < max) {
           if (location.type === 'item') {
@@ -147,8 +147,8 @@ export default class MapUI {
       }
     }
     // Add dungeons
-    for (let id in db.dungeons) {
-      let dungeon = db.dungeons[id];
+    for (const id in db.dungeons) {
+      const dungeon = db.dungeons[id];
       if (dungeon.x !== null && dungeon.y !== null) {
         if (dungeon.x >= min && dungeon.x < max) {
           this._div.append(new DungeonPin(dungeon, dungeon.x - min, dungeon.y, db).element);
@@ -156,7 +156,7 @@ export default class MapUI {
       }
     }
   }
-  get element() {
+  get element(): HTMLDivElement {
     return this._container;
   }
 }

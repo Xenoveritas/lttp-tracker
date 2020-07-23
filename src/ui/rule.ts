@@ -35,7 +35,7 @@ class FieldLabel {
 function createRuleHTML(db: DB, container: HTMLElement, rule: Rule) {
   if (rule._fast !== null) {
     if (typeof rule._fast === 'boolean') {
-      let span = document.createElement('span'), value = rule._fast.toString();
+      const span = document.createElement('span'), value = rule._fast.toString();
       span.className = 'boolean ' + value;
       span.append(value);
       container.append(span);
@@ -44,12 +44,12 @@ function createRuleHTML(db: DB, container: HTMLElement, rule: Rule) {
     }
   } else {
     if (rule._any) {
-      let any = document.createElement('span');
+      const any = document.createElement('span');
       any.className = 'any';
       container.append(any);
       let splice = false;
       // Create this as a giant list of ORs
-      for (let field of rule._any) {
+      for (const field of rule._any) {
         if (splice) {
           any.append(" OR ");
         } else {
@@ -62,12 +62,12 @@ function createRuleHTML(db: DB, container: HTMLElement, rule: Rule) {
       }
     }
     if (rule._all) {
-      let all = document.createElement('span');
+      const all = document.createElement('span');
       all.className = 'all';
       container.append(all);
       let splice = false;
       // Create this as a giant list of ORs
-      for (let field of rule._all) {
+      for (const field of rule._all) {
         if (splice) {
           all.append(" AND ");
         } else {
@@ -83,7 +83,7 @@ function createRuleFieldHTML(db: DB, container: HTMLElement, item: string | Rule
   if (typeof item === 'string') {
     container.append(new FieldLabel(db, item).element);
   } else {
-    let subrule = document.createElement('span');
+    const subrule = document.createElement('span');
     subrule.className = 'rule';
     container.append(subrule);
     createRuleHTML(db, subrule, item);

@@ -43,7 +43,7 @@ export default class TrackerUI {
    * The root node of the tracker. This is not added to the DOM automatically
    * and must be added by the creator of the tracker.
    */
-  get element() {
+  get element(): HTMLDivElement {
     if (this._needsUI) {
       this.createUI(this.db.layout);
     }
@@ -55,19 +55,19 @@ export default class TrackerUI {
    * called the first time {@link #element} is retrieved using the default
    * layout if it was never called.
    */
-  createUI(layout?: LayoutDefinition | string[]) {
+  createUI(layout?: LayoutDefinition | string[]): void {
     if (arguments.length === 0) {
       layout = this.db.layout;
     } else if (Array.isArray(layout)) {
       // In this case, each string indicates what to pull in from the default
       // UI.
-      let newLayout: LayoutDefinition = {};
-      for (let ui of layout) {
+      const newLayout: LayoutDefinition = {};
+      for (const ui of layout) {
         newLayout[ui] = this.db.layout[ui];
       }
       layout = newLayout;
     }
-    for (let ui in layout) {
+    for (const ui in layout) {
       switch (ui) {
         case 'items':
           this.createItemUI(layout.items);
@@ -85,94 +85,97 @@ export default class TrackerUI {
           this.createFooterUI();
           break;
         default:
-          let div = document.createElement('div');
-          div.className = 'error';
-          div.append('Unknown UI component "');
-          let code = document.createElement('code');
-          code.append(ui);
-          div.append(code);
-          div.append('".');
-          this._container.append(div);
+          this.createErrorUI(ui);
       }
     }
     this._needsUI = false;
     this._layout = layout;
   }
-  createItemUI(items: ItemLayout) {
+  createItemUI(items: ItemLayout): void {
     this._itemsDiv = document.createElement('div');
     this._itemsDiv.className = 'items';
     this._container.append(this._itemsDiv);
     // Build the item UI.
-    for (let row of items) {
-      let rowDiv = document.createElement('div');
+    for (const row of items) {
+      const rowDiv = document.createElement('div');
       rowDiv.className = 'row';
       this._itemsDiv.append(rowDiv);
-      for (let item of row) {
+      for (const item of row) {
         rowDiv.append(createItemUI(item, this.db).element);
       }
     }
   }
-  createEquipmentUI(equipment: EquipmentLayout) {
+  createEquipmentUI(equipment: EquipmentLayout): void {
     this._equipmentDiv = document.createElement('div');
     this._equipmentDiv.className = 'equipment';
     this._container.append(this._equipmentDiv);
-    let slots = this.db.slots;
+    const slots = this.db.slots;
     // Build the item UI.
-    for (let id of equipment) {
-      let items = (id in slots ? slots[id] : id);
+    for (const id of equipment) {
+      const items = (id in slots ? slots[id] : id);
       this._equipmentDiv.append(createEquipmentUI(id, items, this.db).element);
     }
   }
-  createDungeonUI(dungeons: DungeonsLayout) {
+  createDungeonUI(dungeons: DungeonsLayout): void {
     this._dungeonUIs = [];
     this._dungeonsDiv = document.createElement('div');
     this._dungeonsDiv.className = 'dungeons';
     this._container.append(this._dungeonsDiv);
     // Build the item UI.
-    for (let row in dungeons) {
-      let rowDiv = document.createElement('div');
+    for (const row in dungeons) {
+      const rowDiv = document.createElement('div');
       rowDiv.className = 'row';
       this._dungeonsDiv.append(rowDiv);
-      for (let dungeon of dungeons[row]) {
-        let ui = new DungeonUI(this, dungeon, this.db);
+      for (const dungeon of dungeons[row]) {
+        const ui = new DungeonUI(this, dungeon, this.db);
         this._dungeonUIs.push(ui);
         rowDiv.append(ui.element);
       }
     }
   }
-  createMapsUI(maps: MapsLayout) {
+  createMapsUI(maps: MapsLayout): void {
     this._mapsDiv = document.createElement('div');
     this._mapsDiv.className = 'maps';
     this._container.append(this._mapsDiv);
-    for (let map of maps) {
+    for (const map of maps) {
       this._mapsDiv.append(new MapUI(map, this.db).element);
     }
   }
-  createSpriteDebugUI() {
-    let sprites = document.createElement('div');
+  createSpriteDebugUI(): void {
+    const sprites = document.createElement('div');
     this._container.append(sprites);
     sprites.append(new LegendUI(this.db).element);
   }
-  createDebugUI() {
+  createDebugUI(): void {
     // Get the rules
-    let rules = this.db.environment._getBoundRules();
-    let names: string[] = Array.from(rules.keys());
+    const rules = this.db.environment._getBoundRules();
+    const names: string[] = Array.from(rules.keys());
     names.sort((a, b) => { return a.localeCompare(b, "en"); });
-    let debug = document.createElement('div');
+    const debug = document.createElement('div');
     this._container.append(debug);
-    for (let name of names) {
+    for (const name of names) {
       debug.append(new RuleUI(this.db, name, rules.get(name)).element);
     }
   }
-  createFooterUI() {
+  createFooterUI(): void {
     this._container.append(this._footerDiv = new FooterUI(this.db).element);
+  }
+  createErrorUI(name: string): void {
+    const div = document.createElement('div');
+    div.className = 'error';
+    div.append('Unknown UI component "');
+    const code = document.createElement('code');
+    code.append(name);
+    div.append(code);
+    div.append('".');
+    this._container.append(div);
   }
 
   /**
    * Resets the entire tracker back to defaults. This rebuilds the UI (as
    * resetting the environment removes all bound listeners).
    */
-  reset() {
+  reset(): void {
     this.db.reset();
     this._container.innerHTML = '';
     if (!this._needsUI) {
@@ -185,7 +188,7 @@ export default class TrackerUI {
    * and will attempt to maintain UI state. (Mostly this means that selected
    * medallions will likely be maintained.)
    */
-  softReset() {
+  softReset(): void {
     this.db.softReset();
   }
 
@@ -193,23 +196,24 @@ export default class TrackerUI {
    * Goes through all the dungeons, seeing which dungeons are complete, and
    * sets flags as necessary.
    */
-  updatePrizes() {
+  updatePrizes(): void {
     if (this._dungeonUIs) {
-      let prizes = new Map();
-      for (let ui of this._dungeonUIs) {
+      const prizes = new Map<string, number>();
+      for (const ui of this._dungeonUIs) {
         if (ui.bossDefeated) {
-          let prize = ui.prize;
+          const prize = ui.prize;
           // It's possible that defeating the boss doesn't give a prize or
           // that the user never set a prize (the prize property doesn't tell us
           // which, but it doesn't matter).
           if (prize) {
-            let current = prizes.get(prize);
+            const current = prizes.get(prize);
             prizes.set(prize, current ? current + 1 : 1);
           }
         }
       }
-      for (let prize in this.db.prizes) {
-        let collection = this.db.prizes[prize], count = prizes.get(prize);
+      for (const prize in this.db.prizes) {
+        const collection = this.db.prizes[prize];
+        let count = prizes.get(prize);
         if (count === undefined)
           count = 0;
         for (let i = 0; i < collection.length; i++) {

@@ -14,7 +14,7 @@ export default class EventEmitter<TEvent> {
    */
   fire(event: TEvent): void {
     if (this.listeners !== null) {
-      for (let listener of this.listeners) {
+      for (const listener of this.listeners) {
         try {
           listener.call(this, event);
         } catch (ex) {

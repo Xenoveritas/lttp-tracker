@@ -28,7 +28,7 @@ export default class DungeonUI {
     this._className = 'dungeon dungeon-' + dungeon;
     this._div.className = this._className;
     // Append a separate DIV to contain the name.
-    let d = document.createElement('div');
+    const d = document.createElement('div');
     d.className = 'name';
     d.append(this.dungeon.name);
     this._div.append(d);
@@ -46,17 +46,17 @@ export default class DungeonUI {
       this.bossDefeated = !this.bossDefeated;
     });
   }
-  get element() {
+  get element(): HTMLDivElement {
     return this._div;
   }
-  get prize() {
+  get prize(): string | null {
     return this._prizeUI ? this._prizeUI.prize : null;
   }
   get bossDefeated(): boolean {
     return this._cleared;
   }
-  set bossDefeated(value) {
-    let newValue = !!value;
+  set bossDefeated(value: boolean) {
+    const newValue = !!value;
     if (newValue != this._cleared) {
       this._cleared = !!value;
       this.tracker.db.environment.set(this.dungeon.id + '.cleared', this._cleared);
@@ -64,7 +64,7 @@ export default class DungeonUI {
       this.update();
     }
   }
-  update() {
+  update(): void {
     let css = this._className;
     if (this._cleared) {
       css += ' defeated';
@@ -83,7 +83,7 @@ class PrizeUI {
     this._div = document.createElement('div');
     this._div.className = 'prize';
     // Prizes is an object, not an array, but we want an array of flags.
-    for (let prize in prizes) {
+    for (const prize in prizes) {
       this._prizes.push(prize);
     }
     this._div.addEventListener('click', event => {
@@ -122,7 +122,7 @@ class MedallionUI {
     this._useRule = 'use_' + ruleName;
     this._medallions = db.slots.medallions;
     this._rules = [ Rule.parse(this._medallions) ];
-    for (let medallion of this._medallions) {
+    for (const medallion of this._medallions) {
       this._rules.push(Rule.parse(medallion));
     }
     this._div.addEventListener('click', event => {
@@ -135,9 +135,9 @@ class MedallionUI {
       this.update();
     });
     this._env = db.environment;
-    let update = () => { this.update(); };
+    const update = () => { this.update(); };
     // Also bind to the medallions directly to reflect their held status.
-    for (let medallion of db.slots.medallions) {
+    for (const medallion of db.slots.medallions) {
       db.environment.addListener(medallion, update);
     }
     // Also bind to the use rule
@@ -145,10 +145,10 @@ class MedallionUI {
     this.update();
   }
   get element() { return this._div; }
-  update() {
+  update(): void {
     let css = 'medallion';
     if (this._medallionIndex >= 0) {
-      let medallion = this._medallions[this._medallionIndex];
+      const medallion = this._medallions[this._medallionIndex];
       css += ' ' + medallion;
     }
     if (this._env.isTrue(this._ruleName))
@@ -157,7 +157,7 @@ class MedallionUI {
       css += ' useable';
     this._div.className = css;
   }
-  updateRule() {
+  updateRule(): void {
     this._env.set(this._ruleName, this._rules[this._medallionIndex + 1]);
   }
 }

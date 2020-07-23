@@ -9,14 +9,14 @@ function capitalize(str: string): string {
 }
 
 function makeIcon(cssClass: string): HTMLDivElement {
-  let icon = document.createElement('div');
+  const icon = document.createElement('div');
   icon.className = cssClass;
   icon.style.display = 'inline-block';
   return icon;
 }
 
 function makeItemIcon(id: string, held = false): HTMLDivElement {
-  let icon = makeIcon('item item-' + id);
+  const icon = makeIcon('item item-' + id);
   if (held) {
     icon.className += ' held';
   }
@@ -27,7 +27,7 @@ function makePinEntry(id: string, name?: string): HTMLLIElement {
   if (!name) {
     name = capitalize(id);
   }
-  let li = document.createElement('li');
+  const li = document.createElement('li');
   li.append(makeIcon('pin ' + id));
   li.append(' ' + name);
   return li;
@@ -51,12 +51,12 @@ function makeDungeonPinEntry(items?: string, bossDefeatable?: boolean) {
   } else {
     name += ', Boss Not Available)';
   }
-  let li = document.createElement('li');
-  let icon = makeIcon('pin dungeon ' + state);
-  let itemIcon = document.createElement('div');
+  const li = document.createElement('li');
+  const icon = makeIcon('pin dungeon ' + state);
+  const itemIcon = document.createElement('div');
   itemIcon.className = 'items items-' + items;
   icon.append(itemIcon);
-  let bossIcon = document.createElement('div');
+  const bossIcon = document.createElement('div');
   bossIcon.className = 'boss boss-' + (bossDefeatable ? 'defeatable' : 'unavailable');
   icon.append(bossIcon);
   li.append(icon);
@@ -64,12 +64,12 @@ function makeDungeonPinEntry(items?: string, bossDefeatable?: boolean) {
   return li;
 }
 
-function makePrizeEntry(prize: string) {
+function makePrizeEntry(prize: string): HTMLLIElement {
   let css = 'prize';
   if (prize) {
     css += ' ' + prize;
   }
-  let icon = makeIcon(css), li = document.createElement('li');
+  const icon = makeIcon(css), li = document.createElement('li');
   li.append(icon);
   li.append(' ' + prize);
   return li;
@@ -86,7 +86,7 @@ function makeMedallionEntry(medallion: string, available = false, useable = fals
   if (useable) {
     css += ' useable';
   }
-  let icon = makeIcon(css), li = document.createElement('li');
+  const icon = makeIcon(css), li = document.createElement('li');
   li.append(icon);
   li.append(' ' + (medallion === null ? 'Unknown' : capitalize(medallion)) + ', '
     + (available ? ('Held, ' + (useable ? 'Useable' : 'Not Useable'))
@@ -95,8 +95,8 @@ function makeMedallionEntry(medallion: string, available = false, useable = fals
 }
 
 function makeBossEntry(boss: string) {
-  let css = 'dungeon dungeon-' + boss;
-  let li = document.createElement('li');
+  const css = 'dungeon dungeon-' + boss;
+  const li = document.createElement('li');
   li.append(makeIcon(css));
   li.append(' ');
   li.append(makeIcon(css + ' defeated'));
@@ -110,8 +110,8 @@ export default class LegendUI {
     this._div = document.createElement('div');
     let list = document.createElement('ul');
     this._div.append(list);
-    for (let id in db.items) {
-      let item = db.items[id], li = document.createElement('li');
+    for (const id in db.items) {
+      const item = db.items[id], li = document.createElement('li');
       li.append(makeItemIcon(id));
       li.append(makeItemIcon(id, true));
       li.append(' ' + item.name);
@@ -137,23 +137,23 @@ export default class LegendUI {
     list = document.createElement('ul');
     this._div.append(list);
     list.append(makePrizeEntry(null));
-    for (let prize in db.prizes) {
+    for (const prize in db.prizes) {
       list.append(makePrizeEntry(prize));
     }
     list.append(makeMedallionEntry(null, false));
     list.append(makeMedallionEntry(null, true, false));
     list.append(makeMedallionEntry(null, true, true));
-    for (let medallion of db.slots['medallions']) {
+    for (const medallion of db.slots['medallions']) {
       list.append(makeMedallionEntry(medallion, false));
       list.append(makeMedallionEntry(medallion, true, false));
       list.append(makeMedallionEntry(medallion, true, true));
     }
-    for (let dungeon in db.dungeons) {
+    for (const dungeon in db.dungeons) {
       list.append(makeBossEntry(dungeon));
     }
   }
 
-  get element() {
+  get element(): HTMLDivElement {
     return this._div;
   }
 }

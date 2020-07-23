@@ -1,6 +1,5 @@
 import DB from '../db';
 import Item from '../item';
-import { Environment } from '../rule';
 
 export type ItemLayoutDefinition = string | string[];
 
@@ -17,13 +16,13 @@ export type ItemLayoutDefinition = string | string[];
  */
 export function createItemUI(item: ItemLayoutDefinition, db: DB, couldRecurseInfinitely?: boolean): ItemUI | MultiItemUI {
   if (Array.isArray(item)) {
-    let uis: ItemUI[] = [];
-    for (let subItem of item) {
+    const uis: ItemUI[] = [];
+    for (const subItem of item) {
       uis.push(new ItemUI(subItem, db));
     }
     return new MultiItemUI(uis);
   } else if (item === 'bow_and_arrows') {
-    if ('bow_and_arrows' in db.slots && arguments.length < 3) {
+    if ('bow_and_arrows' in db.slots && couldRecurseInfinitely) {
       // Extra argument is to prevent infinite recursion if someone asks for
       // bow and arrows in the bow and arrows slot
       return createItemUI(db.slots['bow_and_arrows'], db, true);
@@ -46,7 +45,7 @@ export function createItemUI(item: ItemLayoutDefinition, db: DB, couldRecurseInf
  * @param item the item itself or an array of items
  * @param db the game DB
  */
-export function createEquipmentUI(id: string, item: string | string[], db: DB) {
+export function createEquipmentUI(id: string, item: string | string[], db: DB): ItemUI | EquipmentUI {
   if (Array.isArray(item)) {
     return new EquipmentUI(id, item, db);
   } else {
@@ -71,7 +70,7 @@ export class ItemUI {
     this._div.setAttribute('title', this.item.name);
     this._cssClass = 'item item-' + item;
     //this._div.append(this.item.name);
-    this._div.addEventListener('click', event => {
+    this._div.addEventListener('click', () => {
       this.item.toggleHeld(this.db.environment);
       this.update();
     }, false);
@@ -79,11 +78,11 @@ export class ItemUI {
     this.update();
   }
 
-  get element() {
+  get element(): HTMLDivElement {
     return this._div;
   }
 
-  update() {
+  update(): void {
     let css = this._cssClass;
     if (this.item.isHeld(this.db.environment)) {
       css += ' held';
@@ -132,24 +131,24 @@ export class BowUI {
     }, false);
     this.update();
   }
-  get element() {
+  get element(): HTMLDivElement {
     return this._div;
   }
-  get bowHeld() {
+  get bowHeld(): boolean {
     return (this._state & 0x02) == 0x02;
   }
-  set bowHeld(value) {
+  set bowHeld(value: boolean) {
     this._state |= value ? 0x02 : ~0x02;
     this.update();
   }
-  get silverArrowsHeld() {
+  get silverArrowsHeld(): boolean {
     return (this._state & 0x01) == 0x01;
   }
-  set silverArrowsHeld(value) {
+  set silverArrowsHeld(value: boolean) {
     this._state |= value ? 0x01 : ~0x01;
     this.update();
   }
-  update() {
+  update(): void {
     this.db.environment.set('bow', this.bowHeld);
     this.db.environment.set('silver_arrows', this.silverArrowsHeld);
     let css = 'item item-';
@@ -174,12 +173,12 @@ export class MultiItemUI {
   constructor(public subUIs: ItemUI[]) {
     this._div = document.createElement('div');
     this._div.className = 'shared-item-slot';
-    for (let subUI of subUIs) {
+    for (const subUI of subUIs) {
       this._div.append(subUI.element);
     }
   }
 
-  get element() {
+  get element(): HTMLDivElement {
     return this._div;
   }
 }
@@ -201,7 +200,7 @@ export class EquipmentUI {
         continue;
       }
       // Items are currently a string ID, so get the actual item.
-      let item = db.items[items[i]];
+      const item = db.items[items[i]];
       if (item === undefined) {
         throw new Error("Unknown item " + items[i]);
       }
@@ -236,10 +235,10 @@ export class EquipmentUI {
     }, false);
     this.update();
   }
-  get element() {
+  get element(): HTMLDivElement {
     return this._div;
   }
-  update() {
+  update(): void {
     let css = 'item item-';
     if (this._items[this._index] === null) {
       css += this._id + ' slot-empty';

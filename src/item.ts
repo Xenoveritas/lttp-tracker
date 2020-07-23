@@ -11,7 +11,7 @@ export default class Item {
   constructor(public readonly id: string, public readonly name: string) {
   }
 
-  isHeld(environment: Environment) {
+  isHeld(environment: Environment): boolean {
     return environment.isTrue(this.id);
   }
 
