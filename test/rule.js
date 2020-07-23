@@ -1,7 +1,7 @@
 "use strict";
 
 const assert = require('assert'),
-  Rule = require('../lib/rule');
+  Rule = require('../dist-tools/src/rule').default;
 
 describe('Rule', () => {
   describe('#dependsOn', () => {
@@ -75,11 +75,12 @@ describe('Environment', () => {
       environment.set('rule', rule);
       let newRule = Rule.parse('baz');
       environment.set('rule', newRule);
-      assert.equal(environment._get('foo')._dependents.length, 0);
-      assert.equal(environment._get('bar')._dependents.length, 0);
-      assert.equal(environment._get('baz')._dependents.length, 1);
+      // FIXME: This relies on private not being enforced in JS and won't work when converted to TypeScript
+      assert.equal(environment._get('foo').dependents.length, 0);
+      assert.equal(environment._get('bar').dependents.length, 0);
+      assert.equal(environment._get('baz').dependents.length, 1);
       environment.set('rule', false);
-      assert.equal(environment._get('baz')._dependents.length, 0);
+      assert.equal(environment._get('baz').dependents.length, 0);
     });
   });
 });
