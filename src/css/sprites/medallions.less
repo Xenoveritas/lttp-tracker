@@ -3,19 +3,30 @@
 .medallion {
   .sprite(@medallion);
   // When not held, gray it out.
-  filter: grayscale(50%);
+  filter: contrast(50%);
   &.held {
+    .sprite-position(@medallion-held-useless);
     &.useable {
+      .sprite-position(@medallion-held);
       filter: none;
     }
   }
   &.bombos {
-    .sprite-position(@bombos);
+    .sprite-position(@bombos-useless);
+    &.useable {
+      .sprite-position(@bombos);
+    }
   }
   &.ether {
-    .sprite-position(@ether);
+    .sprite-position(@ether-useless);
+    &.useable {
+      .sprite-position(@ether);
+    }
   }
   &.quake {
-    .sprite-position(@quake);
+    .sprite-position(@quake-useless);
+    &.useable {
+      .sprite-position(@quake);
+    }
   }
 }
