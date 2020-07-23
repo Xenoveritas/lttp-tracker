@@ -208,12 +208,12 @@ export class Environment {
    * Test if a given name is bound to a rule.
    */
   isBoundToRule(name: string): boolean {
+    return this.getBoundRule(name) !== null;
+  }
+
+  getBoundRule(name: string): Rule | null {
     const v = this.env.get(name);
-    if (v === undefined) {
-      return false;
-    } else {
-      return v._rule !== null;
-    }
+    return v === undefined ? null : v._rule;
   }
 
   /**
@@ -276,7 +276,7 @@ export class Environment {
   }
 }
 
-type RulePart = string | Rule;
+export type RulePart = string | Rule;
 type BasicType = string | boolean;
 
 function isBasicType(o: Rule | string | boolean): o is BasicType {
@@ -298,8 +298,10 @@ export default class Rule {
   /**
    * Create a new Rule. It's recommended to use Rule.parse instead of the
    * constructor directly.
+   * @param definition the definition of the rule
+   * @param name an optional name for the rule, for human readable outputs
    */
-  constructor(definition: RuleDefinition) {
+  constructor(definition: RuleDefinition, public name?: string) {
     this._any = null;
     this._all = null;
     if (typeof definition === 'string') {
@@ -321,7 +323,7 @@ export default class Rule {
         if ('all' in definition) {
           this._all = parseDefinitonList(definition['all']);
           // Empty all will always be true. If there are no any elements, this
-          // means this rull will always be true.
+          // means this rule will always be true.
           if (this._all.length === 0 && this._any === null) {
             this._fast = true;
             return;
@@ -344,6 +346,27 @@ export default class Rule {
   }
 
   /**
+   * Returns a COPY of the any array.
+   */
+  get any(): RulePart[] { return this._any === null ? [] : this._any.slice(); }
+
+  /**
+   * Returns a COPY of the all array.
+   */
+  get all(): RulePart[] {
+    if (this._all === null) {
+      if (this._any === null && typeof this._fast === 'string') {
+        // If both are empty, return fast if it's a string
+        return [ this._fast ];
+      } else {
+        return [];
+      }
+    } else {
+      return this._all.slice();
+    }
+  }
+
+  /**
    * Evaluate this rule within an environment.
    */
   evaluate(env: Environment): boolean {
@@ -354,7 +377,7 @@ export default class Rule {
         return this._fast;
       }
     }
-    const evalFlag = (flag: string | Rule) => {
+    const evalFlag = (flag: RulePart) => {
       return (typeof flag === 'string') ? env.isTrue(flag) : flag.evaluate(env);
     };
     if (this._any && (!this._any.some(evalFlag))) {
@@ -365,6 +388,21 @@ export default class Rule {
     }
     // If we've fallen through to here, this matches.
     return true;
+  }
+
+  /**
+   * Returns whether or not this rule is independent. Independent rules never change their values.
+   */
+  isIndependent(): boolean {
+    return typeof this._fast === 'boolean';
+  }
+
+  isAlwaysTrue(): boolean {
+    return this._fast === true;
+  }
+
+  isAlwaysFalse(): boolean {
+    return this._fast === false;
   }
 
   /**
@@ -482,7 +520,12 @@ export default class Rule {
   /**
    * Parse a rule.
    */
-  static parse(definition: RuleDefinition): Rule {
+  static parse(definition: RuleDefinition, name?: string): Rule {
+    if (name) {
+      // If the rule is named, even if it would be one of the terminal rules,
+      // we need to create it so it can have its name.
+      return new Rule(definition, name);
+    }
     if (definition === true) {
       return Rule.TRUE;
     } else if (definition === false || definition === undefined || definition === null) {

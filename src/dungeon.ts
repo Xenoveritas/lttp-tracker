@@ -26,6 +26,9 @@ export class Boss {
   get name(): string { return this._name; }
   get hasPrize(): boolean { return this._hasPrize; }
 
+  get accessRule(): Rule { return this._access; }
+  get defeatRule(): Rule { return this._defeat; }
+
   isAccessible(environment: Environment): boolean {
     if (!environment)
       environment = this._env;
@@ -158,6 +161,10 @@ export default class Dungeon implements BasicLocation {
    */
   get totalItemCount(): number {
     return this._items.length;
+  }
+
+  get entryRule(): Rule {
+    return this._enter;
   }
 
   /**

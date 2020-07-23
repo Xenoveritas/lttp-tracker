@@ -83,4 +83,20 @@ describe('Environment', () => {
       assert.equal(environment._get('baz').dependents.length, 0);
     });
   });
+  describe('independent rule functions', () => {
+    describe('Rule.TRUE', () => {
+      it('works', () => {
+        assert.equal(Rule.TRUE.isIndependent(), true);
+        assert.equal(Rule.TRUE.isAlwaysTrue(), true);
+        assert.equal(Rule.TRUE.isAlwaysFalse(), false);
+      });
+    });
+    describe('Rule.FALSE', () => {
+      it('works', () => {
+        assert.equal(Rule.FALSE.isIndependent(), true);
+        assert.equal(Rule.FALSE.isAlwaysTrue(), false);
+        assert.equal(Rule.FALSE.isAlwaysFalse(), true);
+      });
+    });
+  })
 });

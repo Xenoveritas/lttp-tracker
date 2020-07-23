@@ -183,10 +183,9 @@ rules:
   #       variable) or itself a rule using the same definition.
   #     - An array, which is treated as if it were under the "all" key above.
   #
-  # Each rule has a name and description which, at present, are ignored. In
-  # the future they'll likely be used to generate a "human readable" explanation
-  # of how rules are evaulating, to try and answer "why does this think I
-  # can/can't do thing" questions.
+  # Each rule has a name and description. Currently the description is ignored.
+  # Names, if provided, are used when generating tooltips that reference the
+  # rule. Instead of reporting the subrule, the rule's name is used instead.
   light:
     # Really this is a meta-item. It exists to allow "light source" to be
     # flagged separately from "fire source" for anyone who wants to attempt
@@ -218,13 +217,13 @@ rules:
     description: 'The ability to light a torch.'
     requires: any: [ 'lamp', 'fire_rod' ]
   weapon:
-    name: 'Weapon'
+    name: 'Any Weapon'
     description: 'Access to a weapon'
     requires: any: [ 'sword', 'bow_and_arrows', 'bombs', 'fire_rod', 'hammer',
       'red_cane', 'blue_cane' ]
   # Something that can melt ice, required for the Ice Palace.
   melt_ice:
-    name: 'Melt Source'
+    name: 'Melt Ice'
     description: 'The ability to melt ice: specifically Freezors and Kholdstare.'
     requires: any: [ 'fire_rod', 'use_bombos' ]
   defeat_popo:

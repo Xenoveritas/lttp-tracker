@@ -66,6 +66,16 @@ export default class DB {
   }
 
   /**
+   * Looks up all items that are required for a given item.
+   * @param rule the rule to find items necessary for
+   */
+  getNeededItems(rule: Rule): Item[] {
+    // This is actually simpler than it may seem: grab the dependency set and
+    // find all dependencies that are items.
+    return rule.uniqueDependencies().filter(id => this.isItem(id)).map(id => this.items[id]);
+  }
+
+  /**
    * Resets the database. This completely resets the environment back to its
    * original state (which also removes all bound listeners).
    */

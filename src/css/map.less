@@ -1,5 +1,6 @@
 // Styles for the map display.
 
+@import 'palette.less';
 @import 'mixins/sprites.less';
 @import '../../generated/sprites.less';
 @import '../../generated/map.less';
@@ -41,6 +42,24 @@
     }
     .title {
       font-weight: bold;
+    }
+    .badge {
+      display: inline-block;
+      text-transform: uppercase;
+      background-color: #666;
+      font-weight: bold;
+      font-size: 10px;
+      padding: 2px 6px;
+      margin: 4px;
+      border-radius: 8px;
+      &.open, &.defeatable {
+        background-color: @available-color;
+        color: @available-text-color;
+      }
+      &.closed, &.undefeatable {
+        background-color: @unavailable-color;
+        color: @unavailable-text-color;
+      }
     }
   }
 }

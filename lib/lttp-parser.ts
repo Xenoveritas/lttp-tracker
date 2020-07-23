@@ -56,7 +56,11 @@ export function createDefaultDatabase() {
     if ('requires' in rule) {
       // Make sure the rule works.
       Rule.parse(rule.requires);
-      output.write(`    ${JSON.stringify(id)}: Rule.parse(${JSON.stringify(rule['requires'])}),\n`);
+      output.write(`    ${JSON.stringify(id)}: Rule.parse(${JSON.stringify(rule['requires'])}`);
+      if ('name' in rule && typeof rule.name === 'string') {
+        output.write(`, ${JSON.stringify(rule.name)}`);
+      }
+      output.write('),\n');
     } else {
       throw new Error(`Missing requires in rule ${id}: rule must have some requirement.`);
     }

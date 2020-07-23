@@ -8,9 +8,9 @@
   "private": true,
   "scripts": {
     "start": "yarn build:tools && webpack --watch --config webpack.dev.js",
-    "build": "yarn build:tools && yarn build:pro",
-    "dev": "webpack --config webpack.dev.js",
-    "build:data": "node lib/lttp-parser.js src/data.cson generated/data.js",
+    "build": "yarn build:tools && yarn build:prod",
+    "dev": "yarn build:tools && webpack --config webpack.dev.js",
+    "build:data": "node dist-tools/lib/lttp-parser.js src/data.cson generated/data.js",
     "build:tools": "tsc --build tsconfig.tools.json",
     "build:prod": "webpack --config webpack.prod.js",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
