@@ -84,7 +84,10 @@ class ItemPin extends BasicPin {
       }
       if (visible < this.location.items) {
         const inaccessible = this.location.items - available;
-        title += `${inaccessible} item${inaccessible !== 1 ? 's' : ''} inaccessible`;
+        if (visible > 0) {
+          title += ', ';
+        }
+        title += `${inaccessible} inaccessible item${inaccessible !== 1 ? 's' : ''}`;
       }
     } else {
       title += available + ' item';
@@ -92,11 +95,12 @@ class ItemPin extends BasicPin {
         title += 's';
       title += ' available';
       if (visible > 0) {
-        title + ', ' + visible + ' visible';
+        title += `, ${visible} visible item${visible !== 1 ? 's' : ''}`;
       }
-      const inaccessible = this.location.items - available;
+      // The visible item count only counts items that are visible but inaccessible
+      const inaccessible = this.location.items - available - visible;
       if (inaccessible > 0)
-        title += `${inaccessible} item${inaccessible !== 1 ? 's' : ''} inaccessible`;
+        title += `, ${inaccessible} inaccessible item${inaccessible !== 1 ? 's' : ''}`;
     }
     this.pin.title = title + ')';
     this.pin.className = this.className + state;

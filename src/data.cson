@@ -530,6 +530,8 @@ locations:
   zora_ledge:
     name: "Zora's Domain Ledge"
     requires: 'flippers'
+    # If you can get into Zora's Domain, you can see what's on the ledge
+    visible: 'glove'
   zoras_domain:
     name: "Zora's Domain"
     merge: [ "zora", "zora_ledge" ]
@@ -1171,5 +1173,5 @@ logics:
       bow_and_arrows: [ 'bow', 'wooden_arrows', 'silver_arrows' ]
 
 version:
-  date: '2018-03-07'
+  date: '2020-07-23'
   alttpr: 'v29'

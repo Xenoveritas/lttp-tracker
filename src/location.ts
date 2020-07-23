@@ -159,7 +159,7 @@ export class MergeLocation extends Location {
     super(id,
       name,
       locations.map(location => location.id),
-      locations.map(location => location.id + '.visible'),
+      { any: locations.map(location => location.id + '.visible') },
       x, y,
       locations.reduce<number>((itemCount: number, location: Location) => {
         return itemCount + location.items;
@@ -176,10 +176,11 @@ export class MergeLocation extends Location {
   }
 
   /**
-   * Determines if this location has items that are visible.
+   * Determines if this location has items that are visible. This is considered
+   * true if at least one item is visible.
    */
   isVisible(environment: Environment): boolean {
-    return this._subLocations.every(location => location.isVisible(environment));
+    return this._subLocations.some(location => location.isVisible(environment));
   }
 
   /**
