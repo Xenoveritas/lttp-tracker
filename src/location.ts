@@ -25,13 +25,6 @@ export interface BasicLocation {
 export default class Location implements BasicLocation {
   private _required: Rule;
   private _visible: Rule;
-  x: number;
-  y: number;
-  /**
-   * The number of items at this location.
-   */
-  items: number;
-  type: string;
   cleared = false;
 
   /**
@@ -63,17 +56,14 @@ export default class Location implements BasicLocation {
     public readonly name: string,
     required: RuleDefinition,
     visible: RuleDefinition,
-    x: number,
-    y: number,
-    items: number,
-    type = 'item'
+    public readonly x: number,
+    public readonly y: number,
+    public readonly items = 1,
+    public readonly type = 'item',
+    public readonly cost = 0
   ) {
     this._required = Rule.parse(required);
     this._visible = Rule.parse(visible);
-    this.x = x;
-    this.y = y;
-    this.items = items;
-    this.type = type;
   }
 
   get availableRule(): Rule {
@@ -183,7 +173,7 @@ export default class Location implements BasicLocation {
  * are available.
  */
 export class MergeLocation extends Location {
-  private _subLocations: Location[];
+  public readonly subLocations: Location[];
   constructor(id: string, name: string, x: number, y: number, locations: Location[]) {
     super(id,
       name,
@@ -194,14 +184,14 @@ export class MergeLocation extends Location {
         return itemCount + location.items;
       }, 0)
     );
-    this._subLocations = locations;
+    this.subLocations = locations;
   }
 
   /**
    * Determines if this location has items that are available.
    */
   isAvailable(environment: Environment): boolean {
-    return this._subLocations.every(location => location.isAvailable(environment));
+    return this.subLocations.every(location => location.isAvailable(environment));
   }
 
   /**
@@ -209,7 +199,7 @@ export class MergeLocation extends Location {
    * true if at least one item is visible.
    */
   isVisible(environment: Environment): boolean {
-    return this._subLocations.some(location => location.isVisible(environment));
+    return this.subLocations.some(location => location.isVisible(environment));
   }
 
   /**
@@ -219,7 +209,7 @@ export class MergeLocation extends Location {
    * @param environment the environment to check
    */
   getAccessibleItemCount(environment: Environment): number {
-    return this._subLocations.reduce<number>((itemCount: number, location: Location) => {
+    return this.subLocations.reduce<number>((itemCount: number, location: Location) => {
       return itemCount + location.getAccessibleItemCount(environment);
     }, 0);
   }
@@ -230,7 +220,7 @@ export class MergeLocation extends Location {
    * @param environment the environment to check
    */
   getVisibleItemCount(environment: Environment): number {
-    return this._subLocations.reduce<number>((itemCount: number, location: Location) => {
+    return this.subLocations.reduce<number>((itemCount: number, location: Location) => {
       return itemCount + location.getVisibleItemCount(environment);
     }, 0);
   }
@@ -249,7 +239,7 @@ export class MergeLocation extends Location {
       return Location.AVAILABLE;
     } else if (available > 0) {
       return Location.PARTIALLY_AVAILABLE;
-    } else if (this._subLocations.some(location => location.isVisible(environment))) {
+    } else if (this.subLocations.some(location => location.isVisible(environment))) {
       return Location.VISIBLE;
     } else {
       return Location.UNAVAILABLE;
@@ -268,6 +258,6 @@ export class MergeLocation extends Location {
    * @param listener a listener that will fire whenever the state in that environment changes
    */
   addStateListener(environment: Environment, listener: LocationListener): void {
-    this._subLocations.forEach(location => location.addStateListener(environment, listener));
+    this.subLocations.forEach(location => location.addStateListener(environment, listener));
   }
 }

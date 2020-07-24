@@ -126,9 +126,27 @@ export function createDefaultDatabase() {
           items = 0;
         }
       }
-      output.write(`    ${JSON.stringify(id)}: new Location(${JSON.stringify(id)}, ${JSON.stringify(name)}, ${JSON.stringify(requires)}, ${JSON.stringify(visible)}, ${getCoords(location)}, ${JSON.stringify(items)}`);
+      output.write(`    ${JSON.stringify(id)}: new Location(${JSON.stringify(id)}, ${JSON.stringify(name)}, ${JSON.stringify(requires)}, ${JSON.stringify(visible)}, ${getCoords(location)}`);
+      if (items !== 1) {
+        output.write(`, ${JSON.stringify(items)}`);
+      }
       if (type !== 'item') {
+        if (items === 1) {
+          // Item count isn't written if 1 by default
+          output.write(', 1');
+        }
         output.write(`, ${JSON.stringify(type)}`);
+      }
+      if ('rupees' in location) {
+        if (type === 'item') {
+          if (items === 1) {
+            // Item count isn't written if 1 and an item
+            output.write(', 1');
+          }
+          // Item types aren't written by default but are needed if there's an associated cost
+          output.write(', "item"');
+        }
+        output.write(`, ${JSON.stringify(location['rupees'])}`);
       }
       output.write('),\n');
     }

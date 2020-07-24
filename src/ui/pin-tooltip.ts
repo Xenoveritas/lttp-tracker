@@ -1,13 +1,29 @@
-import { BasicLocation } from '../location';
+import Location, { BasicLocation, MergeLocation } from '../location';
 import Dungeon from '../dungeon';
 import DB from '../db';
 import Rule, { RulePart } from '../rule';
 
-function createTitle(title: string): HTMLDivElement {
-  const div = document.createElement('div');
-  div.className = 'title';
-  div.append(title);
-  return div;
+function createAndAppend<K extends keyof HTMLElementTagNameMap>(tagName: K, within: HTMLElement, cssClass?: string, text?: string): HTMLElementTagNameMap[K] {
+  const result = document.createElement(tagName);
+  within.append(result);
+  if (cssClass)
+    result.className = cssClass;
+  if (text)
+    result.append(text);
+  return result;
+}
+
+function createTitle(title: string, within: HTMLElement, cssClass = 'title'): HTMLDivElement {
+  return createAndAppend('div', within, cssClass, title);
+}
+
+function createBadge(within: HTMLElement, text?: string, cssClass?: string): HTMLSpanElement {
+  return createAndAppend('span', within, cssClass ? 'badge ' + cssClass : 'badge', text);
+}
+
+function updateBadge(badge: HTMLSpanElement, text: string, cssClass: string): void {
+  badge.innerText = text;
+  badge.className = 'badge ' + cssClass;
 }
 
 /**
@@ -15,35 +31,29 @@ function createTitle(title: string): HTMLDivElement {
  */
 export default class PinTooltip {
   private itemDescription: HTMLDivElement;
+  private itemBadge: HTMLSpanElement = null;
   private dungeonBadge: HTMLSpanElement = null;
   private bossBadge: HTMLSpanElement = null;
   private ruleElements: HTMLElement[] = [];
 
   constructor(private location: BasicLocation, private db: DB, container: HTMLDivElement) {
-    let title = createTitle(location.name);
-    container.append(title);
+    createTitle(location.name, container);
+    const badgeContainer = document.createElement('div');
+    badgeContainer.className = 'badges';
+    container.append(badgeContainer);
     if (location instanceof Dungeon) {
-      const badgeContainer = document.createElement('div');
-      badgeContainer.className = 'badges';
-      container.append(badgeContainer);
-      this.dungeonBadge = document.createElement('span');
-      this.dungeonBadge.className = 'badge';
-      badgeContainer.append(this.dungeonBadge);
-      this.bossBadge = document.createElement('span');
-      this.bossBadge.className = 'badge';
-      badgeContainer.append(this.bossBadge);
+      this.dungeonBadge = createBadge(badgeContainer);
+      this.bossBadge = createBadge(badgeContainer);
       const entryContainer = document.createElement('div');
       container.append(entryContainer);
       entryContainer.className = 'entry-requirements';
-      title = createTitle('Entry Requirements');
-      entryContainer.append(title);
+      createTitle('Entry Requirements', entryContainer);
       this.createRuleExplainer(location.entryRule, entryContainer);
       if (location.boss !== null) {
         const bossContainer = document.createElement('div');
         container.append(bossContainer);
         bossContainer.className = 'boss-requirements';
-        title = createTitle('Boss Requirements');
-        bossContainer.append(title);
+        createTitle('Boss Requirements', bossContainer);
         const accessContainer = document.createElement('div');
         bossContainer.append(accessContainer);
         accessContainer.append('Access: ');
@@ -53,12 +63,47 @@ export default class PinTooltip {
         defeatContainer.append('Defeat: ');
         this.createRuleExplainer(location.boss.defeatRule, defeatContainer);
       }
+      this.itemDescription = createAndAppend('div', container, 'items');
+    } else if (location instanceof Location) {
+      // Otherwise this should reflect the state
+      this.itemBadge = createBadge(badgeContainer);
+      this.itemDescription = createAndAppend('div', container, 'items');
+      if (location instanceof MergeLocation) {
+        // This is "really" multiple locations
+        const sublocDiv = document.createElement('div');
+        container.append(sublocDiv);
+        sublocDiv.append('Sublocations:');
+        const locationList = document.createElement('ul');
+        sublocDiv.append(locationList);
+        for (const subloc of location.subLocations) {
+          const li = document.createElement('li');
+          locationList.append(li);
+          createTitle(subloc.name, li);
+          this.createLocationExplainer(subloc, li);
+        }
+      } else {
+        this.createLocationExplainer(location, container);
+      }
     }
-    this.itemDescription = document.createElement('div');
-    this.itemDescription.className = 'items';
-    container.append(this.itemDescription);
     // And fill it out
     this.update();
+  }
+
+  private createLocationExplainer(location: Location, container: HTMLElement): void {
+    if (location.cost > 0) {
+      const costDiv = createTitle('Costs: ', container, 'price');
+      createAndAppend('span', costDiv, 'rupees', location.cost.toString());
+    }
+    if (location.availableRule.isAlwaysTrue()) {
+      createTitle('Always Accessible', container, 'require-rule');
+    } else {
+      createTitle('Requires:', container, 'require-rule');
+      this.createRuleExplainer(location.availableRule, container);
+    }
+    if (!location.visibleRule.isIndependent()) {
+      createTitle('Visible when:', container, 'visible-rule');
+      this.createRuleExplainer(location.visibleRule, container);
+    }
   }
 
   private createRuleExplainer(rule: Rule, container: HTMLElement, addParenthesis = false): void {
@@ -184,11 +229,30 @@ export default class PinTooltip {
     this.itemDescription.innerText = this.generateItemDescription();
     if (this.location instanceof Dungeon) {
       const open = this.location.isEnterable(this.db.environment);
-      this.dungeonBadge.innerText = open ? 'Open' : 'Inaccessible';
-      this.dungeonBadge.className = `badge ${open ? 'open' : 'closed'}`;
+      updateBadge(this.dungeonBadge, open ? 'Open' : 'Inaccessible', open ? 'open' : 'closed');
       const bossDefeatable = this.location.isBossDefeatable(this.db.environment);
-      this.bossBadge.innerText = bossDefeatable ? 'Boss Challengable' : 'Boss Undefeatable';
-      this.bossBadge.className = `badge ${bossDefeatable ? 'defeatable' : 'undefeatable'}`;
+      updateBadge(this.bossBadge, bossDefeatable ? 'Boss Challengable' : 'Boss Undefeatable', bossDefeatable ? 'defeatable' : 'undefeatable');
+    } else if (this.location instanceof Location) {
+      let title = 'Error', className = 'error';
+      switch(this.location.getState(this.db.environment)) {
+        case Location.UNAVAILABLE:
+          title = 'Inaccessible';
+          className = 'unavailable';
+          break;
+        case Location.VISIBLE:
+          title = 'Visible';
+          className = 'visible';
+          break;
+        case Location.PARTIALLY_AVAILABLE:
+          title = 'Partially Accessible';
+          className = 'partial';
+          break;
+        case Location.AVAILABLE:
+          title = 'Accessible';
+          className = 'available';
+          break;
+      }
+      updateBadge(this.itemBadge, title, className);
     }
   }
 }
