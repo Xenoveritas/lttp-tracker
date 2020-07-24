@@ -161,6 +161,12 @@ export default class PinTooltip {
     const ruleHTML = document.createElement('span');
     container.append(ruleHTML);
     if (typeof part === 'string') {
+      // It may be a region, in which case, show the name rather than the region requirements.
+      const region = this.db.regions[part];
+      if (region) {
+        ruleHTML.append(`Access to ${region.name}`);
+        return;
+      }
       // This may actually be its own subrule.
       const subrule = this.db.environment.getBoundRule(part);
       if (subrule !== null) {
@@ -170,17 +176,18 @@ export default class PinTooltip {
         const item = this.db.items[part];
         if (item) {
           ruleHTML.append(item.name);
-        } else {
-          if (part.endsWith('.cleared')) {
-            // May be a dungeon
-            const dungeon = this.db.dungeons[part.substr(0, part.length - 8)];
-            if (dungeon) {
-              ruleHTML.append(dungeon.boss ? dungeon.boss.name + ' Defeated' : dungeon.name + ' Cleared');
-              return;
-            }
-          }
-          ruleHTML.append('unknown: ' + part);
+          return;
         }
+        if (part.endsWith('.cleared')) {
+          // May be a dungeon
+          const dungeon = this.db.dungeons[part.substr(0, part.length - 8)];
+          if (dungeon) {
+            ruleHTML.append(dungeon.boss ? dungeon.boss.name + ' Defeated' : dungeon.name + ' Cleared');
+            return;
+          }
+        }
+        ruleHTML.append('unknown: ' + part);
+        return;
       }
     } else if (part !== null) {
       // Otherwise, it's another rule
