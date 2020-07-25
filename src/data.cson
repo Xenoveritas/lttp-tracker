@@ -642,6 +642,7 @@ locations:
   desert_cliff:
     name: "Desert Cliff"
     requires: any: [ 'book', 'dw_mm_mirror' ]
+    visible: true
     location: [ 12, 464 ]
   checkboard_cave:
     name: "Checkerboard Cave"

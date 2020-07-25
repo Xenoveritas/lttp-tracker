@@ -443,7 +443,7 @@ export class ConstantRule extends Rule {
    * Evaluate this rule within an environment.
    */
   evaluate(_env: Environment): boolean {
-    return false;
+    return this.value;
   }
 
   /**
