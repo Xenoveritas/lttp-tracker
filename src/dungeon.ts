@@ -90,7 +90,6 @@ export default class Dungeon implements BasicLocation {
   private _enter: Rule;
   private _boss: Boss;
   private _items: ItemLocation[];
-  private _keys: number;
   /**
    * Not in pool is simply a list of possible actual items that are not in
    * the chest pool. (For example, the Big Key in Castle Escape drops from an
@@ -107,16 +106,16 @@ export default class Dungeon implements BasicLocation {
   constructor(
     public readonly id: string,
     public readonly name: string,
-    enter: RuleDefinition, boss: Boss, items: ItemLocation[], keys: number,
-    public x: number,
-    public y: number, notInPool: string[] | null, medallion: string | null) {
+    enter: RuleDefinition, boss: Boss, items: ItemLocation[],
+    public readonly keys: number,
+    public readonly x: number,
+    public readonly y: number, notInPool: string[] | null, medallion: string | null) {
     this._enter = Rule.parse(enter);
     this._boss = boss;
     this._items = items;
-    this._keys = keys;
     this._notInPool = notInPool;
     this._medallion = medallion;
-    this._itemCount = this._items.length - this._keys - 3;
+    this._itemCount = this._items.length - this.keys - 3;
     if (this._boss && this._boss.hasPrize) {
       // Boss also has something
       this._itemCount++;

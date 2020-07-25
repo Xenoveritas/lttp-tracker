@@ -198,6 +198,14 @@ export default class PinTooltip {
       if (inaccessible > 0)
         description += `, ${inaccessible} inaccessible item${inaccessible !== 1 ? 's' : ''}`;
     }
+    if (this.location instanceof Dungeon) {
+      const count = this.location.treasureCount;
+      if (count === 0) {
+        description += ' (all of which are dungeon items)';
+      } else {
+        description += ` (${count} of which ${count === 1 ? 'is not a dungeon item' : 'are not dungeon items'})`;
+      }
+    }
     return description;
   }
 
