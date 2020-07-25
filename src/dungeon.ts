@@ -156,11 +156,11 @@ export default class Dungeon implements BasicLocation {
   }
 
   /**
-   * Gets the total number of randomizer locations, including any keys, the map,
-   * and the compass in the pool.
+   * Gets the total number of randomizer locations (including the boss),
+   * including any keys, the map, and the compass in the pool.
    */
   get totalItemCount(): number {
-    return this._items.length;
+    return this._items.length + (this.hasPrize ? 1 : 0);
   }
 
   get entryRule(): Rule {
@@ -189,9 +189,13 @@ export default class Dungeon implements BasicLocation {
     // If you can't enter, then no items can be taken.
     if (!this.isEnterable(environment))
       return 0;
-    return this._items.reduce((current, item) => {
+    let result = this._items.reduce((current, item) => {
       return item.isAccessible(environment) ? current + 1 : current;
     }, 0);
+    // Also the boss if it can be killed
+    if (this._boss !== null && this._boss.hasPrize && this._boss.isDefeatable(environment))
+      result++;
+    return result;
   }
 
   /**
