@@ -1,7 +1,7 @@
 "use strict";
 
 import DB from "../db";
-import Rule from "../rule";
+import Rule, { ListRule, LookupRule } from "../rule";
 
 class FieldLabel {
   private _span: HTMLSpanElement;
@@ -33,61 +33,36 @@ class FieldLabel {
 }
 
 function createRuleHTML(db: DB, container: HTMLElement, rule: Rule) {
-  if (rule._fast !== null) {
-    if (typeof rule._fast === 'boolean') {
-      const span = document.createElement('span'), value = rule._fast.toString();
-      span.className = 'boolean ' + value;
-      span.append(value);
-      container.append(span);
-    } else {
-      container.append(new FieldLabel(db, rule._fast).element);
-    }
-  } else {
-    if (rule._any) {
-      const any = document.createElement('span');
-      any.className = 'any';
-      container.append(any);
-      let splice = false;
-      // Create this as a giant list of ORs
-      for (const field of rule._any) {
-        if (splice) {
-          any.append(" OR ");
-        } else {
-          splice = true;
-        }
-        createRuleFieldHTML(db, any, field);
+  if (rule.isIndependent()) {
+    // These rules are static
+    const span = document.createElement('span'), value = rule.isAlwaysTrue().toString();
+    span.className = 'boolean ' + value;
+    span.append(value);
+    container.append(span);
+  } else if (rule instanceof LookupRule) {
+    container.append(new FieldLabel(db, rule.field).element);
+  } else if (rule instanceof ListRule) {
+    const span = document.createElement('span');
+    span.className = rule.all ? 'all' : 'any';
+    container.append(span);
+    let splice = false;
+    // Create this as a giant list of ORs
+    for (const field of rule.children) {
+      if (splice) {
+        span.append(rule.all ? ' AND ' : ' OR ');
+      } else {
+        splice = true;
       }
-      if (rule._all) {
-        container.append(" AND ");
-      }
-    }
-    if (rule._all) {
-      const all = document.createElement('span');
-      all.className = 'all';
-      container.append(all);
-      let splice = false;
-      // Create this as a giant list of ORs
-      for (const field of rule._all) {
-        if (splice) {
-          all.append(" AND ");
-        } else {
-          splice = true;
-        }
-        createRuleFieldHTML(db, all, field);
-      }
+      createRuleFieldHTML(db, span, field);
     }
   }
 }
 
-function createRuleFieldHTML(db: DB, container: HTMLElement, item: string | Rule) {
-  if (typeof item === 'string') {
-    container.append(new FieldLabel(db, item).element);
-  } else {
-    const subrule = document.createElement('span');
-    subrule.className = 'rule';
-    container.append(subrule);
-    createRuleHTML(db, subrule, item);
-  }
+function createRuleFieldHTML(db: DB, container: HTMLElement, item: Rule) {
+  const subrule = document.createElement('span');
+  subrule.className = 'rule';
+  container.append(subrule);
+  createRuleHTML(db, subrule, item);
 }
 
 /**

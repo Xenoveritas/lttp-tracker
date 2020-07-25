@@ -43,11 +43,12 @@ export interface RuleConfig {
   requires: RuleDeclaration;
 }
 
-export type RuleDeclaration = RuleObject | string[] | string | boolean;
+export type RulePartDeclaration = RuleObject | string[] | string;
+export type RuleDeclaration = RulePartDeclaration | boolean;
 
 export interface RuleObject {
-  any?: RuleDeclaration[];
-  all?: RuleDeclaration[];
+  any?: RulePartDeclaration[];
+  all?: RulePartDeclaration[] | string;
 }
 
 export interface RegionConfig {

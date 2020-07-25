@@ -178,7 +178,7 @@ rules:
   #         * any: a list of things to logical OR together
   #         * all: a list of things to logical AND together
   #       The evaluated value of any and all will be ANDed together to create
-  #       the final evaluated of the rule.
+  #       the final evaluated value of the rule.
   #       Each "thing" in that list can either be a string (to look up a
   #       variable) or itself a rule using the same definition.
   #     - An array, which is treated as if it were under the "all" key above.
@@ -296,7 +296,7 @@ rules:
     name: 'Power Glove (or better)'
     requires: any: [ 'power_glove', 'titans_mitt' ]
   break_weak_wall:
-    name: "Bombs or Pegasus Shoes"
+    name: "Bombs/Pegasus Shoes"
     requires: any: [ 'bombs', 'pegasus_boots' ]
   all_crystals:
     name: "All Crystals"

@@ -1,7 +1,7 @@
 import Location, { BasicLocation, MergeLocation } from '../location';
 import Dungeon from '../dungeon';
 import DB from '../db';
-import Rule, { RulePart } from '../rule';
+import Rule, { ListRule, LookupRule } from '../rule';
 
 function createAndAppend<K extends keyof HTMLElementTagNameMap>(tagName: K, within: HTMLElement, cssClass?: string, text?: string): HTMLElementTagNameMap[K] {
   const result = document.createElement(tagName);
@@ -101,7 +101,7 @@ export default class PinTooltip {
       this.createRuleExplainer(location.availableRule, container);
     }
     if (!location.visibleRule.isIndependent()) {
-      createTitle('Visible when:', container, 'visible-rule');
+      createTitle('Visible with:', container, 'visible-rule');
       this.createRuleExplainer(location.visibleRule, container);
     }
   }
@@ -116,84 +116,57 @@ export default class PinTooltip {
     } else if (rule.name) {
       // If the rule is named, just add the name
       ruleHTML.append(rule.name);
-    } else {
-      // Otherwise, we're going to need to recurse
-      const all = rule.all;
-      const any = rule.any;
-      if (addParenthesis && all.length + any.length > 1) {
-        ruleHTML.append('(');
-      }
-      if (all.length > 0) {
-        this.createRuleList(all, ruleHTML);
-      }
-      if (any.length > 0) {
-        if (all.length > 0) {
-          // All must be met to be true
-          ruleHTML.append(' and ');
-        }
-        this.createRuleList(any, ruleHTML, ' or ');
-      }
-      if (addParenthesis && all.length + any.length > 1) {
-        ruleHTML.append(')');
-      }
-    }
-  }
-
-  private createRuleList(subrules: RulePart[], container: HTMLElement, joiner = ' and '): void {
-    // Don't do anything if empty
-    if (subrules.length === 0)
-      return;
-    const ruleHTML = document.createElement('span');
-    ruleHTML.className = 'rule';
-    container.append(ruleHTML);
-    let needsJoin = false;
-    for (const subrule of subrules) {
-      if (needsJoin) {
-        ruleHTML.append(joiner);
-      } else {
-        needsJoin = true;
-      }
-      this.createRulePartElement(subrule, ruleHTML);
-    }
-  }
-
-  private createRulePartElement(part: RulePart, container: HTMLElement): void {
-    const ruleHTML = document.createElement('span');
-    container.append(ruleHTML);
-    if (typeof part === 'string') {
-      // It may be a region, in which case, show the name rather than the region requirements.
-      const region = this.db.regions[part];
+    } else if (rule instanceof LookupRule) {
+      const field = rule.field;
+      const region = this.db.regions[field];
       if (region) {
         ruleHTML.append(`Access to ${region.name}`);
         return;
       }
-      // This may actually be its own subrule.
-      const subrule = this.db.environment.getBoundRule(part);
+      const subrule = this.db.environment.getBoundRule(field);
       if (subrule !== null) {
         this.createRuleExplainer(subrule, ruleHTML, true);
       } else {
         // Look up the item in the DB
-        const item = this.db.items[part];
+        const item = this.db.items[field];
         if (item) {
           ruleHTML.append(item.name);
           return;
         }
-        if (part.endsWith('.cleared')) {
+        if (field.endsWith('.cleared')) {
           // May be a dungeon
-          const dungeon = this.db.dungeons[part.substr(0, part.length - 8)];
+          const dungeon = this.db.dungeons[field.substr(0, field.length - 8)];
           if (dungeon) {
             ruleHTML.append(dungeon.boss ? dungeon.boss.name + ' Defeated' : dungeon.name + ' Cleared');
             return;
           }
         }
-        ruleHTML.append('unknown: ' + part);
+        ruleHTML.append('unknown: ' + field);
         return;
       }
-    } else if (part !== null) {
-      // Otherwise, it's another rule
-      this.createRuleExplainer(part, ruleHTML, true);
+    } else if (rule instanceof ListRule) {
+      // Otherwise, we're going to need to recurse
+      if (addParenthesis) {
+        // If we were asked to add parenthesis, only do it if there's at least one rule
+        addParenthesis = rule.children.length > 1;
+      }
+      if (addParenthesis) {
+        ruleHTML.append('(');
+      }
+      let splice = false;
+      for (const subrule of rule.children) {
+        if (splice) {
+          ruleHTML.append(rule.all ? ' and ' : ' or ');
+        } else {
+          splice = true;
+        }
+        this.createRuleExplainer(subrule, ruleHTML, true);
+      }
+      if (addParenthesis) {
+        ruleHTML.append(')');
+      }
     } else {
-      ruleHTML.append('ERROR (null rule)');
+      ruleHTML.append('Error: Unknown Rule Element');
     }
   }
 

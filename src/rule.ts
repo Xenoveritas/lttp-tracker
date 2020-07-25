@@ -8,10 +8,12 @@ export type ValueListener = (name: string, value: boolean, env: Environment) => 
 export type RuleValue = Rule | boolean;
 
 export interface RuleObjectDefinition {
-  any?: RuleDefinition[];
-  all?: RuleDefinition[];
+  any?: SubRuleDefinition[];
+  // For backwards-compat, all may sometimes be only a string.
+  all?: SubRuleDefinition[] | string;
 }
-export type RuleDefinition = RuleObjectDefinition | string[] | string | boolean;
+export type SubRuleDefinition = RuleObjectDefinition | string[] | string;
+export type RuleDefinition = SubRuleDefinition | boolean;
 
 /**
  * A value within the environment. This is a local class, it is not exported.
@@ -276,222 +278,80 @@ export class Environment {
   }
 }
 
-export type RulePart = string | Rule;
-type BasicType = string | boolean;
-
-function isBasicType(o: Rule | string | boolean): o is BasicType {
-  return typeof o === 'string' || typeof o ==='boolean';
-}
-
 /**
- * Implementation of a rule.
+ * A Rule. There are various types of Rules but this defines the basic Rule
+ * type. The most basic Rule will always evaluate to false.
  */
-export default class Rule {
+export default abstract class Rule {
   /**
-   * If non-null, this value will immediately be returned on evaluate. (If a
-   * string, the rule will be looked up in the environment.)
-   * @private
-   */
-  _fast: BasicType | null = null;
-  _any: RulePart[] | null;
-  _all: RulePart[] | null;
-  /**
-   * Create a new Rule. It's recommended to use Rule.parse instead of the
-   * constructor directly.
-   * @param definition the definition of the rule
+   * Create a new Rule. Rules created like this are mostly useless - use
+   * Rule.parse instead.
    * @param name an optional name for the rule, for human readable outputs
    */
-  constructor(definition: RuleDefinition, public name?: string) {
-    this._any = null;
-    this._all = null;
-    if (typeof definition === 'string') {
-      this._fast = definition;
-    } else if (typeof definition === 'object') {
-      if (Array.isArray(definition)) {
-        this._all = parseDefinitonList(definition);
-      } else {
-        // If the rule is an object, it can contain either "any" or "all"
-        if ('any' in definition) {
-          this._any = parseDefinitonList(definition['any']);
-          // Empty any will always be false. Since the end result is the result
-          // of both any and all, this means this rule will always be false.
-          if (this._any.length === 0) {
-            this._fast = false;
-            return;
-          }
-        }
-        if ('all' in definition) {
-          this._all = parseDefinitonList(definition['all']);
-          // Empty all will always be true. If there are no any elements, this
-          // means this rule will always be true.
-          if (this._all.length === 0 && this._any === null) {
-            this._fast = true;
-            return;
-          }
-        }
-      }
-      // If this is a generic rule (only a string) just dump it into fast and
-      // be done.
-      if (this._all && this._any === null && this._all.length === 1 && isBasicType(this._all[0])) {
-        this._fast = this._all[0];
-      }
-      if (this._any && this._all === null && this._any.length === 1 && isBasicType(this._any[0])) {
-        this._fast = this._any[0];
-      }
-    } else if (typeof definition === 'boolean') {
-      this._fast = definition;
-    } else {
-      throw new Error("Invalid rule definition: " + definition);
-    }
-  }
-
-  /**
-   * Returns a COPY of the any array.
-   */
-  get any(): RulePart[] { return this._any === null ? [] : this._any.slice(); }
-
-  /**
-   * Returns a COPY of the all array.
-   */
-  get all(): RulePart[] {
-    if (this._all === null) {
-      if (this._any === null && typeof this._fast === 'string') {
-        // If both are empty, return fast if it's a string
-        return [ this._fast ];
-      } else {
-        return [];
-      }
-    } else {
-      return this._all.slice();
-    }
+  constructor(public name?: string) {
+    // Nothing
   }
 
   /**
    * Evaluate this rule within an environment.
    */
-  evaluate(env: Environment): boolean {
-    if (this._fast !== null) {
-      if (typeof this._fast === 'string') {
-        return env.isTrue(this._fast);
-      } else {
-        return this._fast;
-      }
-    }
-    const evalFlag = (flag: RulePart) => {
-      return (typeof flag === 'string') ? env.isTrue(flag) : flag.evaluate(env);
-    };
-    if (this._any && (!this._any.some(evalFlag))) {
-      return false;
-    }
-    if (this._all && (!this._all.every(evalFlag))) {
-      return false;
-    }
-    // If we've fallen through to here, this matches.
-    return true;
-  }
-
-  /**
-   * Returns whether or not this rule is independent. Independent rules never change their values.
-   */
-  isIndependent(): boolean {
-    return typeof this._fast === 'boolean';
-  }
-
-  isAlwaysTrue(): boolean {
-    return this._fast === true;
-  }
-
-  isAlwaysFalse(): boolean {
-    return this._fast === false;
-  }
-
-  /**
-   * Determine whether or not this rule depends on a given value.
-   */
-  dependsOn(name: string): boolean {
-    if (typeof this._fast === 'boolean') {
-      return false;
-    } else if (typeof this._fast === 'string') {
-      return this._fast === name;
-    }
-    return this._dependsOn(name);
-  }
-
-  private _dependsOn(name: string): boolean {
-    if (this._any !== null) {
-      if (this._any.some(n => {
-          if (typeof n === 'string') {
-            return n === name;
-          } else if (typeof n === 'object') {
-            return n._dependsOn(name);
-          }
-        })) {
-        return true;
-      }
-    }
-    if (this._all !== null) {
-      if (this._all.some(n => {
-          if (typeof n === 'string') {
-            return n === name;
-          } else if (typeof n === 'object') {
-            return n._dependsOn(name);
-          }
-        })) {
-        return true;
-      }
-    }
+  evaluate(_env: Environment): boolean {
     return false;
   }
 
   /**
-   * Gets a set of unique names within this rule.
+   * Returns whether or not this rule is independent. Independent rules never
+   * change their values. Default is false.
    */
-  uniqueDependencySet(): Set<string> {
-    const names = new Set<string>();
-    if (typeof this._fast === 'boolean') {
-      return names;
-    } else if (typeof this._fast === 'string') {
-      names.add(this._fast);
-      return names;
-    }
-    this._uniqueDependencies(names);
-    return names;
+  isIndependent(): boolean {
+    return false;
   }
 
   /**
-   * Internal method to find unique dependencies of this rule.
-   * @param names set being built
+   * Returns whether this rule is always true regardless of environment.
+   * Default is false.
    */
-  private _uniqueDependencies(names: Set<string>): void {
-    if (this._any !== null) {
-      this._any.forEach(name => {
-        if (typeof name === 'string') {
-          names.add(name);
-        } else if (typeof name === 'object') {
-          name._uniqueDependencies(names);
-        }
-      });
-    }
-    if (this._all !== null) {
-      this._all.forEach(name => {
-        if (typeof name === 'string') {
-          names.add(name);
-        } else if (typeof name === 'object') {
-          name._uniqueDependencies(names);
-        }
-      });
-    }
+  isAlwaysTrue(): boolean {
+    return false;
+  }
+
+  /**
+   * Returns whether this rule is always false regardless of environment.
+   * Default is false.
+   */
+  isAlwaysFalse(): boolean {
+    return false;
+  }
+
+  /**
+   * Determine whether or not this rule depends on a given value. Default is
+   * always false.
+   */
+  dependsOn(_name: string): boolean {
+    return false;
+  }
+
+  /**
+   * Gets a set of unique names within this rule. Default creates an empty
+   * set.
+   */
+  uniqueDependencySet(): Set<string> {
+    return new Set<string>();
+  }
+
+  /**
+   * Add all dependenices to the given set. Default does nothing.
+   * @param _set the set to add to
+   */
+  addDependencies(_set: Set<string>): void {
+    // Default does nothing
   }
 
   /**
    * Gets a list of unique names within this rule. The order is undefined.
+   * Default is simply `Array.from(this.uniqueDependencySet())`.
    */
   uniqueDependencies(): string[] {
-    if (typeof this._fast === 'boolean') {
-      return [];
-    } else if (typeof this._fast === 'string') {
-      return [ this._fast ];
-    }
     return Array.from(this.uniqueDependencySet());
   }
 
@@ -499,70 +359,248 @@ export default class Rule {
    * Creates a string representation of the Rule.
    */
   toString(): string {
-    if (this._fast !== null) {
-      return `[Rule ${this._fast.toString()}]`;
-    } else {
-      let s = '[Rule';
-      if (this._any !== null) {
-        s += ' any (' + this._any.join(', ') + ')';
-      }
-      if (this._all !== null) {
-        s += ' all (' + this._all.join(', ') + ')';
-      }
-      return s + ']'
-    }
+    return `[Rule ${this.name}]`;
   }
 
   static Environment = Environment;
-  static TRUE = new Rule(true);
-  static FALSE = new Rule(false);
+  static TRUE: Rule;
+  static FALSE: Rule;
 
   /**
    * Parse a rule.
    */
   static parse(definition: RuleDefinition, name?: string): Rule {
-    if (name) {
-      // If the rule is named, even if it would be one of the terminal rules,
-      // we need to create it so it can have its name.
-      return new Rule(definition, name);
-    }
     if (definition === true) {
-      return Rule.TRUE;
+      return name ? new ConstantRule(true, name) : Rule.TRUE;
     } else if (definition === false || definition === undefined || definition === null) {
-      return Rule.FALSE;
+      return name ? new ConstantRule(false, name) : Rule.FALSE;
     } else {
-      return new Rule(definition);
+      // Otherwise, the fun begins.
+      return Rule.parseListRule(definition, name);
     }
+  }
+
+  static parseListRule(definition: SubRuleDefinition, name?: string): Rule {
+    if (typeof definition === 'string') {
+      return new LookupRule(definition, name);
+    } else if (Array.isArray(definition)) {
+      // A bare array is an AND list
+      return new ListRule(parseRuleArray(definition), true, name);
+    } else if (typeof definition === 'object') {
+      // In this case it *should* have an any or and all key
+      let anyRule: Rule | null = null, allRule: Rule | null = null;
+      if ('any' in definition) {
+        // The definition MUST be a list
+        if (Array.isArray(definition.any)) {
+          anyRule = new ListRule(parseRuleArray(definition.any), false, name);
+        } else {
+          throw new Error('Invalid value for any: ' + definition.any);
+        }
+      }
+      if ('all' in definition) {
+        // The definition MUST be a list
+        if (Array.isArray(definition.all)) {
+          allRule = new ListRule(parseRuleArray(definition.all), true, name);
+        } else if (typeof definition.all === 'string') {
+          if (anyRule === null) {
+            throw new Error('all may only be a single string when combined with any');
+          }
+          allRule = new LookupRule(definition.all);
+        }
+      }
+      if (anyRule === null && allRule == null) {
+        throw new Error('Object missing any or all keys');
+      }
+      if (anyRule !== null && allRule !== null) {
+        // If we have both, we have to wrap them in a surrounding all rule
+        return new ListRule([anyRule, allRule], true);
+      }
+      return anyRule !== null ? anyRule : allRule;
+    }
+    // If we make it here, we couldn't parse things, so give up
+    throw new Error("Invalid value in rule definition: " + definition);
   }
 }
 
-Rule.TRUE.evaluate = function() { return true; };
-Rule.FALSE.evaluate = function() { return false; };
+function parseRuleArray(definitions: SubRuleDefinition[]): Rule[] {
+  return definitions.map((child) => Rule.parse(child));
+}
 
 /**
- * Parses a definition list. This is either a bare list (which is treated as an
- * "all" rule) or a list within a definition object. In any case it may not be
- * a definition object.
+ * A Rule that is always a given constant. Exists mostly so it can be named.
  */
-function parseDefinitonList(list: RuleDefinition[]): RulePart[] {
-  if (typeof list === 'string') {
-    // This is OK: indicates that the rule is a single string.
-    return [ list ];
-  } else if (Array.isArray(list)) {
-    // Basically a list of either other rules or strings
-    const result: RulePart[] = [];
-    for (const rule of list) {
-      if (typeof rule === 'string') {
-        // Just add it.
-        result.push(rule);
-      } else if (typeof rule === 'object') {
-        result.push(Rule.parse(rule));
-      } else {
-        throw new Error("Invalid value in rule definition list: " + rule);
+export class ConstantRule extends Rule {
+  /**
+   * Create a new Rule. Rules created like this are mostly useless - use
+   * Rule.parse instead.
+   * @param name an optional name for the rule, for human readable outputs
+   */
+  constructor(private readonly value: boolean, public name?: string) {
+    super(name);
+  }
+
+  /**
+   * Evaluate this rule within an environment.
+   */
+  evaluate(_env: Environment): boolean {
+    return false;
+  }
+
+  /**
+   * Returns whether or not this rule is independent. Independent rules never change their values.
+   */
+  isIndependent(): boolean {
+    return true;
+  }
+
+  isAlwaysTrue(): boolean {
+    return this.value;
+  }
+
+  isAlwaysFalse(): boolean {
+    return !this.value;
+  }
+
+  /**
+   * Creates a string representation of the Rule.
+   */
+  toString(): string {
+    return `[Rule ${this.name ? this.name + '=' : ''}${this.value}]`;
+  }
+}
+
+// And define Rule.TRUE and Rule.FALSE now.
+
+Rule.TRUE = new ConstantRule(true, 'TRUE');
+Rule.FALSE = new ConstantRule(false, 'FALSE');
+
+/**
+ * A simple rule that looks up its value in the environment.
+ */
+export class LookupRule extends Rule {
+  constructor(public readonly field: string, name?: string) {
+    super(name);
+  }
+
+  /**
+   * Evaluate this rule within an environment.
+   */
+  evaluate(env: Environment): boolean {
+    return env.isTrue(this.field);
+  }
+
+  /**
+   * Returns whether or not this rule is independent. Independent rules never change their values.
+   */
+  isIndependent(): boolean {
+    return false;
+  }
+
+  isAlwaysFalse(): boolean {
+    return false;
+  }
+
+  /**
+   * Determine whether or not this rule depends on a given value.
+   */
+  dependsOn(name: string): boolean {
+    return this.field === name;
+  }
+
+  /**
+   * Gets a set of unique names within this rule.
+   */
+  uniqueDependencySet(): Set<string> {
+    return new Set<string>([ this.field ]);
+  }
+
+  /**
+   * Gets a list of unique names within this rule. The order is undefined.
+   */
+  uniqueDependencies(): string[] {
+    return [ this.field ];
+  }
+
+  addDependencies(set: Set<string>): void {
+    set.add(this.field);
+  }
+
+  /**
+   * Creates a string representation of the Rule.
+   */
+  toString(): string {
+    return `[LookupRule "${this.field}"]`;
+  }
+}
+
+/**
+ * A List rule - a rule that contains a list of children and a comparator rule.
+ */
+export class ListRule extends Rule {
+  /**
+   * Create a new ListRule. Use Rule.parse to parse JSON rule definitions.
+   * @param name an optional name for the rule, for human readable outputs
+   */
+  constructor(public readonly children: Rule[], public readonly all: boolean = true, name?: string) {
+    super(name);
+    for (const child of children) {
+      if (!child) {
+        throw new Error('Missing child in list rule');
       }
     }
-    return result;
-  } else {
-    throw new Error("Invalid value in rule definition: " + list);
+  }
+
+  /**
+   * Evaluate this rule within an environment.
+   */
+  evaluate(env: Environment): boolean {
+    if (this.all) {
+      return this.children.every((rule) => rule.evaluate(env));
+    } else {
+      return this.children.some((rule) => rule.evaluate(env));
+    }
+  }
+
+  /**
+   * Returns whether or not this rule is independent. Independent rules never change their values.
+   */
+  isIndependent(): boolean {
+    return false;
+  }
+
+  isAlwaysFalse(): boolean {
+    return false;
+  }
+
+  /**
+   * Determine whether or not this rule depends on a given value.
+   */
+  dependsOn(name: string): boolean {
+    return this.children.some((rule) => rule.dependsOn(name));
+  }
+
+  /**
+   * Gets a set of unique names within this rule.
+   */
+  uniqueDependencySet(): Set<string> {
+    const names = new Set<string>();
+    this.addDependencies(names);
+    return names;
+  }
+
+  /**
+   * @param set the set to add to
+   */
+  addDependencies(set: Set<string>): void {
+    for (const child of this.children) {
+      child.addDependencies(set);
+    }
+  }
+
+  /**
+   * Creates a string representation of the Rule.
+   */
+  toString(): string {
+    return `[ListRule ${this.children.join(this.all ? ' & ' : ' | ')}]`;
   }
 }
