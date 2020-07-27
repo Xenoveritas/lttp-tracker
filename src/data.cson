@@ -71,13 +71,18 @@ items:
   moon_pearl:
     name: "Moon Pearl"
     type: "equipment"
+  # Just the bow - necessary for retro mode
   bow:
     name: "Bow"
   # For retro mode:
-  wooden_arrows:
-    name: "Wooden Arrows"
-  silver_arrows:
-    name: "Silver Arrows"
+  rupee_quiver:
+    name: "Rupee Quiver"
+  # The bow with wooden arrows
+  bow_and_wooden_arrows:
+    name: "Bow & Wooden Arrows"
+  # The bow with silver arrows
+  bow_and_silver_arrows:
+    name: "Bow & Silver Arrows"
   boomerang:
     name: "Boomerang"
   magic_boomerang:
@@ -200,17 +205,9 @@ rules:
     name: "Master Sword (or better)"
     # Also technically full health
     requires: any: [ 'sword_2', 'sword_3', 'sword_4' ]
-  bow_and_wooden_arrows:
-    name: "Bow & Wooden Arrows"
-    requires: [ 'bow', 'wooden_arrows' ]
-  # This rule isn't really required for anything ever, but ... here it is
-  bow_and_silver_arrows:
-    name: "Bow & Silver Arrows"
-    requires: [ 'bow', 'silver_arrows' ]
-  # For retro mode, here is the new "bow that can be used" rule:
   bow_and_arrows:
     name: "Bow & Arrows"
-    requires: 'bow'
+    requires: any: [ 'bow_and_wooden_arrows', 'bow_and_silver_arrows' ]
   # Something that can light a torch.
   light_torch:
     name: 'Light Torch'
@@ -221,6 +218,10 @@ rules:
     description: 'Access to a weapon'
     requires: any: [ 'sword', 'bow_and_arrows', 'bombs', 'fire_rod', 'hammer',
       'red_cane', 'blue_cane' ]
+  swimming:
+    name: 'Swimming'
+    description: 'Either Flippers or accessible via Fake Flippers'
+    requires: 'flippers'
   # Something that can melt ice, required for the Ice Palace.
   melt_ice:
     name: 'Melt Ice (Fire Rod/Usable Bombos)'
@@ -446,7 +447,7 @@ locations:
     # Strictly speaking you don't instantly dead-end without the Moon Pearl.
     # Instead you dead-end after entering the palace and being unable to kill
     # the Freezor.
-    requires: [ 'flippers', 'titans_mitt', 'moon_pearl' ]
+    requires: [ 'swimming', 'titans_mitt', 'moon_pearl' ]
     location: [ 406, 444 ]
   # It exists, technically:
   spectacle_rock_portal:
@@ -673,6 +674,8 @@ locations:
   hylia_island:
     name: "Hylia Island"
     requires: [ "dw_south", "moon_pearl", "flippers", "mirror" ]
+    # You can't actually see it from shore
+    visible: 'swimming'
     location: [ 373, 426 ]
   ice_rod_cave:
     name: "Ice Rod Cave"
@@ -680,7 +683,7 @@ locations:
     location: [ 458, 395 ]
   hobo:
     name: 'Hobo Under the Bridge'
-    requires: 'flippers'
+    requires: 'swimming'
     location: [ 358, 354 ]
   # DARK WORLD LOCATIONS #######################################################
   bumper_cave:
@@ -879,7 +882,7 @@ dungeons:
       # I'm a bit unclear on what weapons are useful against him, but the
       # hammer/bow and arrow requirement for getting there means you can
       # definitely defeat him.
-      defeat: 'hammer'
+      defeat: [ 'sword', 'bow_and_arrows' ]
       access: [ 'light', 'hammer', 'bow_and_arrows' ]
     items: [
       "Shooter Room"
@@ -1071,13 +1074,25 @@ slots:
   #
   # Note that these are not rules: "sword" is already a rule that means "has any
   # sword" and "glove" is a rule for "has any glove."
-  sword: [ null, "sword_1", "sword_2", "sword_3", "sword_4" ]
-  armor: [ "green_jerkin", "blue_mail", "red_mail" ]
-  shield: [ null, "shield_1", "shield_2", "shield_3" ]
-  glove: [ null, "power_glove", "titans_mitt" ]
-  bow_and_arrows: [ 'bow', 'silver_arrows' ]
+  sword:
+    name: 'Sword'
+    items: [ null, "sword_1", "sword_2", "sword_3", "sword_4" ]
+  armor:
+    name: 'Armor'
+    items: [ "green_jerkin", "blue_mail", "red_mail" ]
+  shield:
+    name: 'Shield'
+    items: [ null, "shield_1", "shield_2", "shield_3" ]
+  glove:
+    name: 'Gloves'
+    items: [ null, "power_glove", "titans_mitt" ]
+  bow_and_arrows:
+    name: 'Bow'
+    items: [ null, 'bow_and_wooden_arrows', 'bow_and_silver_arrows' ]
   # This is used by dungeons to sort through possible entry medallions.
-  medallions: [ 'bombos', 'ether', 'quake' ]
+  medallions:
+    name: 'Medallion'
+    items: [ 'bombos', 'ether', 'quake' ]
 prizes:
   # Prizes define what is awarded when a dungeon completes that is NOT the boss
   # item drop. The order here is the order they're cycled through in the UI.
@@ -1166,13 +1181,15 @@ logics:
   retro:
     name: "Retro"
     rules:
-      # Bow also needs arrows to be useful
+      # Bow now needs a quiver to be useful
       bow_and_arrows:
-        requires: any: [ 'wooden_arrows', 'silver_arrows' ], all: 'bow'
-    slots:
-      # Bow picks up wooden arrows in its slot
-      bow_and_arrows: [ 'bow', 'wooden_arrows', 'silver_arrows' ]
+        requires: any: [ 'bow_and_wooden_arrows', 'bow_and_silver_arrows' ], all: 'rupee_quiver'
+  
+  none:
+    name: 'No Logic'
+    defaults: [ 'bombs', 'pegasus_boots' ]
+    # Probably going to just special-case this rather than have it rewrite all the rules to true
 
 version:
-  date: '2020-07-24'
-  alttpr: 'v29'
+  date: '2020-07-25'
+  alttpr: 'v31'

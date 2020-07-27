@@ -115,7 +115,7 @@ class MedallionUI {
   private _div: HTMLDivElement;
   private _ruleName: string;
   private _useRule: string;
-  private _medallions: string;
+  private _medallions: string[];
   private _rules: Rule[];
   // In order to have an "unknown" option, start at -1
   private _medallionIndex = -1;
@@ -125,7 +125,7 @@ class MedallionUI {
     this._div.className = 'medallion';
     this._ruleName = ruleName;
     this._useRule = 'use_' + ruleName;
-    this._medallions = db.slots.medallions;
+    this._medallions = db.slots.medallions.items;
     this._rules = [ Rule.parse(this._medallions) ];
     for (const medallion of this._medallions) {
       this._rules.push(Rule.parse(medallion));
@@ -142,7 +142,7 @@ class MedallionUI {
     this._env = db.environment;
     const update = () => { this.update(); };
     // Also bind to the medallions directly to reflect their held status.
-    for (const medallion of db.slots.medallions) {
+    for (const medallion of db.slots.medallions.items) {
       db.environment.addListener(medallion, update);
     }
     // Also bind to the use rule

@@ -1,4 +1,4 @@
-import makeDB, { LOGICS, TrackerDataBase, LayoutDefinition } from './data.cson';
+import makeDB, { LOGICS, TrackerDataBase, LayoutDefinition, SlotConfig } from './data.cson';
 
 import Rule from './rule';
 import Item from './item';
@@ -24,7 +24,7 @@ export default class DB {
   regions: Record<string, Region> = { };
   locations: Record<string, Location>;
   dungeons: Record<string, Dungeon> = { };
-  slots: Record<string, string>;
+  slots: Record<string, SlotConfig>;
   prizes: Record<string, string[]>;
   layout: LayoutDefinition;
   defaults: Set<string>;

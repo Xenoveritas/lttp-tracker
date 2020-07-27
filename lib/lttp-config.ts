@@ -96,7 +96,10 @@ export interface DungeonConfig extends BaseLocationConfig {
 }
 
 export type SlotEntry = string | null;
-export type SlotConfig = SlotEntry[];
+export interface SlotConfig {
+  name: string;
+  items: SlotEntry[];
+}
 export type PrizeConfig = string[];
 
 export type ItemLayoutSlot = string | string[];

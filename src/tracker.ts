@@ -3,7 +3,7 @@
  */
 
 import DB from './db';
-import { createItemUI, createEquipmentUI } from './ui/item';
+import { createItemUI } from './ui/item';
 import DungeonUI from './ui/dungeon';
 import MapUI from './ui/map';
 import RuleUI from './ui/rule';
@@ -109,11 +109,9 @@ export default class TrackerUI {
     this._equipmentDiv = document.createElement('div');
     this._equipmentDiv.className = 'equipment';
     this._container.append(this._equipmentDiv);
-    const slots = this.db.slots;
     // Build the item UI.
     for (const id of equipment) {
-      const items = (id in slots ? slots[id] : id);
-      this._equipmentDiv.append(createEquipmentUI(id, items, this.db).element);
+      this._equipmentDiv.append(createItemUI(id, this.db).element);
     }
   }
   createDungeonUI(dungeons: DungeonsLayout): void {

@@ -143,7 +143,7 @@ export default class LegendUI {
     list.append(makeMedallionEntry(null, false));
     list.append(makeMedallionEntry(null, true, false));
     list.append(makeMedallionEntry(null, true, true));
-    for (const medallion of db.slots['medallions']) {
+    for (const medallion of db.slots['medallions'].items) {
       list.append(makeMedallionEntry(medallion, false));
       list.append(makeMedallionEntry(medallion, true, false));
       list.append(makeMedallionEntry(medallion, true, true));

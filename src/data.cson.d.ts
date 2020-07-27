@@ -16,13 +16,18 @@ export interface LayoutDefinition extends Record<string, unknown> {
   maps?: MapsLayout;
 }
 
+export interface SlotConfig {
+  name: string;
+  items: Array<string | null>;
+}
+
 export interface TrackerDataBase {
   rules: Record<string, Rule>;
   items: Item[];
   regions: Region[];
   locations: Record<string, Location>;
   dungeons: Dungeon[];
-  slots: Record<string, string | null>;
+  slots: Record<string, SlotConfig>;
   prizes: Record<string, string[]>;
   layout: LayoutDefinition;
   defaults: string[];
