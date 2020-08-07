@@ -14,16 +14,9 @@ With those two installed, building it should be fairly easy:
 
 ```sh
 yarn install
-yarn build-tools
 yarn build
 ```
-This will generate the production version in `dist/`. The main HTML file is `index.html`.
-
-## Building Tools
-
-At present, the parser for dealing with the logic database is written in TypeScript, but needs to be loaded into WebPack as a plugin. You need to run `yarn build-tools` to build this tool before you can use the WebPack compilers.
-
-This is not optimal and a future version will likely change this, but it's a small price to pay for being able to type check the parser.
+This will generate the production version in `dist/`. The main HTML file is `dist/index.html`.
 
 ## Generating the debug version
 
@@ -33,4 +26,4 @@ There's a separate "debug" version that doesn't run the script through a minifie
 yarn start
 ```
 
-This also generates a version in `dist/` which can be started via `index.html`.
+This creates a dev version that's not minified and contains map files, starting Webpack in "watch" mode, so any changes to the source will cause the Webpack version to be rebuilt. (It does not include live-reload in the browser, you will need to reload the tracker within the browser.) Like the `build` version, this generates a version in `dist/` which can be started via `dist/index.html`.
